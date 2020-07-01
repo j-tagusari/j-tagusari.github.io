@@ -1,9 +1,15 @@
-name: "サイトタイトル"
+name: "my-website"
+output_dir: "."
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
 navbar: 
-  title: "My ウェブサイト"
   left:
     - text: "ホーム"
       href: index.html
     - text: "趣味"
       href: shumi.html
-output_dir: "docs"
