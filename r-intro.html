@@ -11,7 +11,7 @@
 
 
 
-<title>Junta Tagusari’s Website</title>
+<title>R introduction</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -371,12 +371,29 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Junta Tagusari’s Website</h1>
+<h1 class="title toc-ignore">R introduction</h1>
 
 </div>
 
 
-<p>中身なし</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre class="r"><code>data(&quot;ToothGrowth&quot;)
+str(ToothGrowth)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    60 obs. of  3 variables:
+##  $ len : num  4.2 11.5 7.3 5.8 6.4 10 11.2 11.2 5.2 7 ...
+##  $ supp: Factor w/ 2 levels &quot;OJ&quot;,&quot;VC&quot;: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ dose: num  0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...</code></pre>
+<pre class="r"><code>summary(ToothGrowth)</code></pre>
+<pre><code>##       len        supp         dose      
+##  Min.   : 4.20   OJ:30   Min.   :0.500  
+##  1st Qu.:13.07   VC:30   1st Qu.:0.500  
+##  Median :19.25           Median :1.000  
+##  Mean   :18.81           Mean   :1.167  
+##  3rd Qu.:25.27           3rd Qu.:2.000  
+##  Max.   :33.90           Max.   :2.000</code></pre>
+<pre class="r"><code>ggplot(ToothGrowth, aes(dose, len, colour = supp)) +
+  geom_jitter(width = 0.05, height = 0)</code></pre>
+<p><img src="r-intro_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 
 
 

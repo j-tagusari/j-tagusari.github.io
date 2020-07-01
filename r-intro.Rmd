@@ -1,0 +1,21 @@
+---
+title: R introduction
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r message = F}
+library(tidyverse)
+```
+
+```{r}
+data("ToothGrowth")
+str(ToothGrowth)
+summary(ToothGrowth)
+```
+
+```{r}
+ggplot(ToothGrowth, aes(dose, len, colour = supp)) +
+  geom_jitter(width = 0.05, height = 0)
+```

@@ -1,11 +1,5 @@
 ---
-title: トップページ名
+title: Junta Tagusari's Website
 ---
 
-## index
-
-### さんぷる
-
-- ほげ
-- ふが
-
+中身なし
