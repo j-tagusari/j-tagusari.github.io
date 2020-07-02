@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Rによる解析例</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="computing-excer.html">Computing Excercise</a>
+</li>
+<li>
+  <a href="r-intro.html">R intro</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Rによる解析例</h1>
+
+</div>
+
+
+<div id="car-" class="section level1">
+<h1>統計解析サンプル car<br> — 連続×連続の相関解析</h1>
+<div id="section" class="section level2">
+<h2>データ概観</h2>
+<p>車の速度と制動距離に関するデータ．単位を変換しておく．</p>
+<pre class="r"><code>data(cars)
+
+cars &lt;- cars %&gt;%
+  dplyr::mutate(
+    cars$speed &lt;- cars$speed*1.60934,
+    cars$dist  &lt;- cars$dist*0.3048
+  )
+
+summary(cars)</code></pre>
+<pre><code>##      speed           dist     cars$speed &lt;- cars$speed * 1.60934
+##  Min.   : 4.0   Min.   :  2   Min.   : 6.4                      
+##  1st Qu.:12.0   1st Qu.: 26   1st Qu.:19.3                      
+##  Median :15.0   Median : 36   Median :24.1                      
+##  Mean   :15.4   Mean   : 43   Mean   :24.8                      
+##  3rd Qu.:19.0   3rd Qu.: 56   3rd Qu.:30.6                      
+##  Max.   :25.0   Max.   :120   Max.   :40.2                      
+##  cars$dist &lt;- cars$dist * 0.3048
+##  Min.   : 0.6                   
+##  1st Qu.: 7.9                   
+##  Median :11.0                   
+##  Mean   :13.1                   
+##  3rd Qu.:17.1                   
+##  Max.   :36.6</code></pre>
+</div>
+<div id="section-1" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code>ggplot(cars,aes(speed,dist)) + 
+  geom_point() + 
+  geom_smooth(method = &quot;lm&quot;) +
+  scale_x_continuous(name=&#39;speed (km/h)&#39;)+
+  scale_y_continuous(name=&#39;braking distance (m)&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-2" class="section level2">
+<h2>順位相関係数</h2>
+<pre class="r"><code>cor.test(~speed+dist,data=cars,method=&#39;spearman&#39;)</code></pre>
+<pre><code>## Warning in cor.test.default(x = c(4, 4, 7, 7, 8, 9, 10, 10, 10, 11, 11, :
+## Cannot compute exact p-value with ties</code></pre>
+<pre><code>## 
+##  Spearman&#39;s rank correlation rho
+## 
+## data:  speed and dist
+## S = 3533, p-value = 9e-14
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##  rho 
+## 0.83</code></pre>
+</div>
+<div id="section-3" class="section level2">
+<h2>単線形回帰</h2>
+<pre class="r"><code>lm_car &lt;- lm(dist~speed,data=cars)
+summary(lm_car)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = dist ~ speed, data = cars)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -29.07  -9.53  -2.27   9.21  43.20 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  -17.579      6.758   -2.60    0.012 *  
+## speed          3.932      0.416    9.46  1.5e-12 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 15.4 on 48 degrees of freedom
+## Multiple R-squared:  0.651,  Adjusted R-squared:  0.644 
+## F-statistic: 89.6 on 1 and 48 DF,  p-value: 1.49e-12</code></pre>
+</div>
+</div>
+<div id="iris-" class="section level1">
+<h1>統計解析サンプル Iris<br> — カテゴリ×連続</h1>
+<div id="section-4" class="section level2">
+<h2>データ概観</h2>
+<pre class="r"><code>data(iris)
+summary(iris)</code></pre>
+<pre><code>##   Sepal.Length   Sepal.Width    Petal.Length   Petal.Width 
+##  Min.   :4.30   Min.   :2.00   Min.   :1.00   Min.   :0.1  
+##  1st Qu.:5.10   1st Qu.:2.80   1st Qu.:1.60   1st Qu.:0.3  
+##  Median :5.80   Median :3.00   Median :4.35   Median :1.3  
+##  Mean   :5.84   Mean   :3.06   Mean   :3.76   Mean   :1.2  
+##  3rd Qu.:6.40   3rd Qu.:3.30   3rd Qu.:5.10   3rd Qu.:1.8  
+##  Max.   :7.90   Max.   :4.40   Max.   :6.90   Max.   :2.5  
+##        Species  
+##  setosa    :50  
+##  versicolor:50  
+##  virginica :50  
+##                 
+##                 
+## </code></pre>
+</div>
+<div id="section-5" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code>ggplot(iris,aes(Species,Sepal.Length))+
+  geom_violin(width=0.2)+
+  geom_jitter(width=0.2)+theme_bw()+
+  theme(axis.title=element_text(size=20),axis.text=element_text(size=20))</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="t" class="section level2">
+<h2>t検定</h2>
+<pre class="r"><code>t.test(Sepal.Length~Species,data=iris,subset=Species!=&quot;setosa&quot;,var.equal = F)</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  Sepal.Length by Species
+## t = -6, df = 94, p-value = 2e-07
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.882 -0.422
+## sample estimates:
+## mean in group versicolor  mean in group virginica 
+##                     5.94                     6.59</code></pre>
+</div>
+<div id="wilcoxon" class="section level2">
+<h2>wilcoxon検定</h2>
+<pre class="r"><code>wilcox.test(Sepal.Length~Species,data=iris,subset=Species!=&quot;setosa&quot;,var.equal = F)</code></pre>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  Sepal.Length by Species
+## W = 526, p-value = 6e-07
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
+</div>
+<div id="anova" class="section level2">
+<h2>ANOVA</h2>
+<pre class="r"><code>Anova(lm(Sepal.Length~Species, data = iris))</code></pre>
+<pre><code>## Anova Table (Type II tests)
+## 
+## Response: Sepal.Length
+##           Sum Sq  Df F value Pr(&gt;F)    
+## Species     63.2   2     119 &lt;2e-16 ***
+## Residuals   39.0 147                   
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
+<div id="kruskal-wallis" class="section level2">
+<h2>Kruskal-Wallis検定</h2>
+<pre class="r"><code>kruskal.test(Sepal.Length~Species, data = iris)</code></pre>
+<pre><code>## 
+##  Kruskal-Wallis rank sum test
+## 
+## data:  Sepal.Length by Species
+## Kruskal-Wallis chi-squared = 97, df = 2, p-value &lt;2e-16</code></pre>
+</div>
+<div id="tholm" class="section level2">
+<h2>t検定多重比較（Holm）</h2>
+<pre class="r"><code>pairwise.t.test(iris$Sepal.Length,iris$Species,p.adjust.method = &#39;holm&#39;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  iris$Sepal.Length and iris$Species 
+## 
+##            setosa versicolor
+## versicolor 2e-15  -         
+## virginica  &lt;2e-16 3e-09     
+## 
+## P value adjustment method: holm</code></pre>
+</div>
+<div id="wilcoxonholm" class="section level2">
+<h2>wilcoxon検定多重比較（Holm）</h2>
+<pre class="r"><code>pairwise.wilcox.test(iris$Sepal.Length,iris$Species,p.adjust.method = &#39;holm&#39;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using Wilcoxon rank sum test 
+## 
+## data:  iris$Sepal.Length and iris$Species 
+## 
+##            setosa versicolor
+## versicolor 2e-13  -         
+## virginica  &lt;2e-16 6e-07     
+## 
+## P value adjustment method: holm</code></pre>
+</div>
+</div>
+<div id="toothgrowth-" class="section level1">
+<h1>統計解析サンプル ToothGrowth<br> — カテゴリ×連続，交互作用</h1>
+<div id="section-6" class="section level2">
+<h2>データ概観</h2>
+<pre class="r"><code>data(&quot;ToothGrowth&quot;)
+
+ToothGrowth &lt;- ToothGrowth %&gt;%
+  dplyr::mutate(dose = factor(dose))
+
+summary(ToothGrowth)</code></pre>
+<pre><code>##       len       supp     dose   
+##  Min.   : 4.2   OJ:30   0.5:20  
+##  1st Qu.:13.1   VC:30   1  :20  
+##  Median :19.2           2  :20  
+##  Mean   :18.8                   
+##  3rd Qu.:25.3                   
+##  Max.   :33.9</code></pre>
+</div>
+<div id="section-7" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code>ggplot(ToothGrowth,aes(dose,len,colour=supp)) + 
+  geom_jitter(width=0.2, height = 0)+
+  scale_x_discrete(name=&#39;Supplement dose (mg/day)&#39;)+
+  scale_y_continuous(name=expression(paste(&#39;Odeonblasts length (&#39;,mu,&#39;m)&#39;))) +
+  scale_colour_hue(name=&#39;Supplement&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-12-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="anova-1" class="section level2">
+<h2>ANOVA</h2>
+<pre class="r"><code>Anova(lm( len ~ supp * dose, data=ToothGrowth ) )</code></pre>
+<pre><code>## Anova Table (Type II tests)
+## 
+## Response: len
+##           Sum Sq Df F value  Pr(&gt;F)    
+## supp         205  1   15.57 0.00023 ***
+## dose        2426  2   92.00 &lt; 2e-16 ***
+## supp:dose    108  2    4.11 0.02186 *  
+## Residuals    712 54                    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
+<div id="jonckheere-terpstra" class="section level2">
+<h2>Jonckheere-Terpstra検定</h2>
+<pre class="r"><code>jonckheere.test(ToothGrowth$len,as.numeric(ToothGrowth$dose))</code></pre>
+<pre><code>## Warning in jonckheere.test(ToothGrowth$len, as.numeric(ToothGrowth$dose)): Sample size &gt; 100 or data with ties 
+##  p-value based on normal approximation. Specify nperm for permutation p-value</code></pre>
+<pre><code>## 
+##  Jonckheere-Terpstra test
+## 
+## data:  
+## JT = 1104, p-value = 8e-12
+## alternative hypothesis: two.sided</code></pre>
+</div>
+</div>
+<div id="titanic-" class="section level1">
+<h1>統計解析サンプル Titanic<br> — カテゴリ×カテゴリ</h1>
+<div id="section-8" class="section level2">
+<h2>データ概観</h2>
+<pre class="r"><code>data(&quot;Titanic&quot;)
+Titanic &lt;- as.data.frame(Titanic)
+summary(Titanic)</code></pre>
+<pre><code>##   Class       Sex        Age     Survived      Freq    
+##  1st :8   Male  :16   Child:16   No :16   Min.   :  0  
+##  2nd :8   Female:16   Adult:16   Yes:16   1st Qu.:  1  
+##  3rd :8                                   Median : 14  
+##  Crew:8                                   Mean   : 69  
+##                                           3rd Qu.: 77  
+##                                           Max.   :670</code></pre>
+<pre class="r"><code>xtabs(Freq~Sex + Survived, Titanic)</code></pre>
+<pre><code>##         Survived
+## Sex        No  Yes
+##   Male   1364  367
+##   Female  126  344</code></pre>
+</div>
+<div id="section-9" class="section level2">
+<h2>プロット</h2>
+<p>mosaicでは，Freq列があると自動で読み込んでくれる</p>
+<pre class="r"><code>vcd::mosaic(Survived~Class+Sex,data=Titanic,direction=c(&#39;v&#39;,&#39;h&#39;,&#39;h&#39;))</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-15-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="fisher" class="section level2">
+<h2>fisherの正確検定（性別×生存）</h2>
+<pre class="r"><code>fisher.test(xtabs(Freq~Sex + Survived, Titanic))</code></pre>
+<pre><code>## 
+##  Fisher&#39;s Exact Test for Count Data
+## 
+## data:  xtabs(Freq ~ Sex + Survived, Titanic)
+## p-value &lt;2e-16
+## alternative hypothesis: true odds ratio is not equal to 1
+## 95 percent confidence interval:
+##   7.98 12.93
+## sample estimates:
+## odds ratio 
+##       10.1</code></pre>
+</div>
+<div id="section-10" class="section level2">
+<h2>カイ二乗検定（性別×生存）</h2>
+<pre class="r"><code>chisq.test(xtabs(Freq~Sex + Survived, Titanic))</code></pre>
+<pre><code>## 
+##  Pearson&#39;s Chi-squared test with Yates&#39; continuity correction
+## 
+## data:  xtabs(Freq ~ Sex + Survived, Titanic)
+## X-squared = 454, df = 1, p-value &lt;2e-16</code></pre>
+</div>
+<div id="section-11" class="section level2">
+<h2>カイ二乗検定（船室×生存）</h2>
+<p>Fisherの正確検定は，計算量が多すぎてできない</p>
+<pre class="r"><code>chisq.test(xtabs(Freq~Class+ Survived, Titanic))</code></pre>
+<pre><code>## 
+##  Pearson&#39;s Chi-squared test
+## 
+## data:  xtabs(Freq ~ Class + Survived, Titanic)
+## X-squared = 190, df = 3, p-value &lt;2e-16</code></pre>
+</div>
+<div id="section-12" class="section level2">
+<h2>トレンド検定（船室×生存）</h2>
+<pre class="r"><code>mat &lt;- xtabs(Freq~Class+ Survived, Titanic)
+prop.trend.test(mat[,1], apply(mat, 1, sum))</code></pre>
+<pre><code>## 
+##  Chi-squared Test for Trend in Proportions
+## 
+## data:  mat[, 1] out of apply(mat, 1, sum) ,
+##  using scores: 1 2 3 4
+## X-squared = 162, df = 1, p-value &lt;2e-16</code></pre>
+</div>
+</div>
+<div id="spaceshuttle-" class="section level1">
+<h1>統計解析サンプル Spaceshuttle<br> — ロジスティック単回帰</h1>
+<div id="section-13" class="section level2">
+<h2>データ概観</h2>
+<pre class="r"><code>data(&#39;SpaceShuttle&#39;)
+
+SpaceShuttle &lt;- SpaceShuttle %&gt;%
+  dplyr::mutate(
+    Fail = if_else(Fail == &quot;yes&quot;, T, F),
+    Pressure = factor(Pressure)
+  ) %&gt;%
+  na.omit()
+
+summary(SpaceShuttle)</code></pre>
+<pre><code>##   FlightNumber  Temperature   Pressure    Fail           nFailures    
+##  1      : 1    Min.   :53.0   50 : 7   Mode :logical   Min.   :0.000  
+##  2      : 1    1st Qu.:67.0   100: 2   FALSE:16        1st Qu.:0.000  
+##  3      : 1    Median :70.0   200:14   TRUE :7         Median :0.000  
+##  41B    : 1    Mean   :69.6                            Mean   :0.391  
+##  41C    : 1    3rd Qu.:75.0                            3rd Qu.:1.000  
+##  41D    : 1    Max.   :81.0                            Max.   :2.000  
+##  (Other):17                                                           
+##      Damage     
+##  Min.   : 0.00  
+##  1st Qu.: 0.00  
+##  Median : 0.00  
+##  Mean   : 1.61  
+##  3rd Qu.: 4.00  
+##  Max.   :11.00  
+## </code></pre>
+</div>
+<div id="section-14" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code>ggplot(SpaceShuttle,aes(Temperature,as.numeric(Fail))) + 
+  geom_jitter(width=0,height=0.02, aes(colour = Pressure)) +
+  geom_smooth(method = &quot;glm&quot;, method.args = list(family = &quot;binomial&quot;))+
+  scale_y_continuous(name=&#39;Fail&#39;,breaks=c(0,1))</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-20-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-15" class="section level2">
+<h2>ロジスティック単回帰</h2>
+<pre class="r"><code>glm(Fail~Temperature,family=binomial,data=SpaceShuttle) %&gt;% summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Fail ~ Temperature, family = binomial, data = SpaceShuttle)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -1.061  -0.761  -0.378   0.452   2.217  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)  
+## (Intercept)   15.043      7.379    2.04    0.041 *
+## Temperature   -0.232      0.108   -2.14    0.032 *
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 28.267  on 22  degrees of freedom
+## Residual deviance: 20.315  on 21  degrees of freedom
+## AIC: 24.32
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+</div>
+<div id="ucbadmissions-simpsons-paradox" class="section level1">
+<h1>統計解析サンプル UCBAdmissions<br> — simpson’s paradox</h1>
+<div id="section-16" class="section level2">
+<h2>データ概観</h2>
+<pre class="r"><code>data(&#39;UCBAdmissions&#39;)
+UCBAdmissions &lt;- as.data.frame(UCBAdmissions) 
+summary(UCBAdmissions)</code></pre>
+<pre><code>##       Admit       Gender   Dept       Freq    
+##  Admitted:12   Male  :12   A:4   Min.   :  8  
+##  Rejected:12   Female:12   B:4   1st Qu.: 80  
+##                            C:4   Median :170  
+##                            D:4   Mean   :189  
+##                            E:4   3rd Qu.:302  
+##                            F:4   Max.   :512</code></pre>
+</div>
+<div id="section-17" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code>vcd::mosaic(Admit~Gender+Dept,data=UCBAdmissions,direction=c(&#39;v&#39;,&#39;v&#39;,&#39;h&#39;))</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-22-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="fisher-1" class="section level2">
+<h2>fisherの正確検定（性別×合格）</h2>
+<p>女性は合格しにくい？</p>
+<pre class="r"><code>fisher.test(xtabs(Freq~Gender+Admit, UCBAdmissions))</code></pre>
+<pre><code>## 
+##  Fisher&#39;s Exact Test for Count Data
+## 
+## data:  xtabs(Freq ~ Gender + Admit, UCBAdmissions)
+## p-value &lt;2e-16
+## alternative hypothesis: true odds ratio is not equal to 1
+## 95 percent confidence interval:
+##  1.62 2.09
+## sample estimates:
+## odds ratio 
+##       1.84</code></pre>
+</div>
+<div id="section-18" class="section level2">
+<h2>多重ロジスティック回帰（性別×学部×合格）</h2>
+<p>性別による差はない</p>
+<pre class="r"><code># UCBAdmissions_rev &lt;- tidyr::spread(UCBAdmissions, key = &quot;Admit&quot;, value = &quot;Freq&quot;)
+# glm(cbind(Admitted, Admitted + Rejected) ~ Gender + Dept, 
+#     data = UCBAdmissions_rev, family = binomial) %&gt;% summary()</code></pre>
+</div>
+</div>
+<div id="wine-" class="section level1">
+<h1>統計解析サンプル wine<br> — 主成分分析，クラスター分析</h1>
+<div id="section-19" class="section level2">
+<h2>データ概観</h2>
+<pre class="r"><code>wine &lt;- read.csv(&quot;wine.dat&quot;)
+summary(wine)</code></pre>
+<pre><code>##       Cvs          Alcohol       Malic.acid        Ash      
+##  Min.   :1.00   Min.   :11.0   Min.   :0.74   Min.   :1.36  
+##  1st Qu.:1.00   1st Qu.:12.4   1st Qu.:1.60   1st Qu.:2.21  
+##  Median :2.00   Median :13.1   Median :1.86   Median :2.36  
+##  Mean   :1.94   Mean   :13.0   Mean   :2.34   Mean   :2.37  
+##  3rd Qu.:3.00   3rd Qu.:13.7   3rd Qu.:3.08   3rd Qu.:2.56  
+##  Max.   :3.00   Max.   :14.8   Max.   :5.80   Max.   :3.23  
+##  Alcalinity.of.ash   Magnesium     Total.phenols    Flavanoids  
+##  Min.   :10.6      Min.   : 70.0   Min.   :0.98   Min.   :0.34  
+##  1st Qu.:17.2      1st Qu.: 88.0   1st Qu.:1.74   1st Qu.:1.21  
+##  Median :19.5      Median : 98.0   Median :2.36   Median :2.13  
+##  Mean   :19.5      Mean   : 99.7   Mean   :2.30   Mean   :2.03  
+##  3rd Qu.:21.5      3rd Qu.:107.0   3rd Qu.:2.80   3rd Qu.:2.88  
+##  Max.   :30.0      Max.   :162.0   Max.   :3.88   Max.   :5.08  
+##  Nonflavanoid.phenols Proanthocyanins Color.intensity      Hue       
+##  Min.   :0.130        Min.   :0.41    Min.   : 1.28   Min.   :0.480  
+##  1st Qu.:0.270        1st Qu.:1.25    1st Qu.: 3.22   1st Qu.:0.782  
+##  Median :0.340        Median :1.55    Median : 4.69   Median :0.965  
+##  Mean   :0.362        Mean   :1.59    Mean   : 5.06   Mean   :0.957  
+##  3rd Qu.:0.438        3rd Qu.:1.95    3rd Qu.: 6.20   3rd Qu.:1.120  
+##  Max.   :0.660        Max.   :3.58    Max.   :13.00   Max.   :1.710  
+##  OD280.OD315.of.diluted.wines    Proline    
+##  Min.   :1.27                 Min.   : 278  
+##  1st Qu.:1.94                 1st Qu.: 500  
+##  Median :2.78                 Median : 674  
+##  Mean   :2.61                 Mean   : 747  
+##  3rd Qu.:3.17                 3rd Qu.: 985  
+##  Max.   :4.00                 Max.   :1680</code></pre>
+</div>
+<div id="section-20" class="section level2">
+<h2>主成分分析</h2>
+<pre class="r"><code>wineClasses &lt;- factor(wine$Cvs)
+pca_wine &lt;- prcomp(wine[,-1],scale.=T)
+summary(pca_wine)</code></pre>
+<pre><code>## Importance of components:
+##                          PC1   PC2   PC3    PC4    PC5    PC6    PC7
+## Standard deviation     2.169 1.580 1.203 0.9586 0.9237 0.8010 0.7423
+## Proportion of Variance 0.362 0.192 0.111 0.0707 0.0656 0.0494 0.0424
+## Cumulative Proportion  0.362 0.554 0.665 0.7360 0.8016 0.8510 0.8934
+##                           PC8    PC9   PC10   PC11  PC12    PC13
+## Standard deviation     0.5903 0.5375 0.5009 0.4752 0.411 0.32152
+## Proportion of Variance 0.0268 0.0222 0.0193 0.0174 0.013 0.00795
+## Cumulative Proportion  0.9202 0.9424 0.9617 0.9791 0.992 1.00000</code></pre>
+</div>
+<div id="section-21" class="section level2">
+<h2>各因子への変数の寄与</h2>
+<pre class="r"><code>pca_wine$rotation[,1:5]</code></pre>
+<pre><code>##                                   PC1      PC2     PC3     PC4     PC5
+## Alcohol                      -0.14433  0.48365 -0.2074  0.0179 -0.2657
+## Malic.acid                    0.24519  0.22493  0.0890 -0.5369  0.0352
+## Ash                           0.00205  0.31607  0.6262  0.2142 -0.1430
+## Alcalinity.of.ash             0.23932 -0.01059  0.6121 -0.0609  0.0661
+## Magnesium                    -0.14199  0.29963  0.1308  0.3518  0.7270
+## Total.phenols                -0.39466  0.06504  0.1462 -0.1981 -0.1493
+## Flavanoids                   -0.42293 -0.00336  0.1507 -0.1523 -0.1090
+## Nonflavanoid.phenols          0.29853  0.02878  0.1704  0.2033 -0.5007
+## Proanthocyanins              -0.31343  0.03930  0.1495 -0.3991  0.1369
+## Color.intensity               0.08862  0.53000 -0.1373 -0.0659 -0.0764
+## Hue                          -0.29671 -0.27924  0.0852  0.4278 -0.1736
+## OD280.OD315.of.diluted.wines -0.37617 -0.16450  0.1660 -0.1841 -0.1012
+## Proline                      -0.28675  0.36490 -0.1267  0.2321 -0.1579</code></pre>
+</div>
+<div id="section-22" class="section level2">
+<h2>主因子によるワイン等級の説明</h2>
+<pre class="r"><code>plot(pca_wine$x[,1:2], col = wineClasses)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-27-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-23" class="section level2">
+<h2>クラスター分析デンドログラム</h2>
+<pre class="r"><code>wine_clust &lt;- hclust(dist(wine[,-1]))
+plot(wine_clust)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-28-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-24" class="section level2">
+<h2>クラスター分析による等級分け</h2>
+<pre class="r"><code>wine_clust_3 &lt;- cutree(wine_clust,3)
+wine_ctbl &lt;- table(wineClasses,wine_clust_3)
+wine_ctbl</code></pre>
+<pre><code>##            wine_clust_3
+## wineClasses  1  2  3
+##           1 43 16  0
+##           2  0 15 56
+##           3  0 21 27</code></pre>
+</div>
+</div>
+<div id="esoph-" class="section level1">
+<h1>統計解析サンプル Esoph<br> — 多重ロジスティック回帰</h1>
+<div id="section-25" class="section level2">
+<h2>データ概観</h2>
+<p>gpはordered.factor型なので注意</p>
+<pre class="r"><code>data(&#39;esoph&#39;)
+summary(esoph)</code></pre>
+<pre><code>##    agegp          alcgp         tobgp        ncases        ncontrols   
+##  25-34:15   0-39g/day:23   0-9g/day:24   Min.   : 0.00   Min.   : 1.0  
+##  35-44:15   40-79    :23   10-19   :24   1st Qu.: 0.00   1st Qu.: 3.0  
+##  45-54:16   80-119   :21   20-29   :20   Median : 1.00   Median : 6.0  
+##  55-64:16   120+     :21   30+     :20   Mean   : 2.27   Mean   :11.1  
+##  65-74:15                                3rd Qu.: 4.00   3rd Qu.:14.0  
+##  75+  :11                                Max.   :17.00   Max.   :60.0</code></pre>
+</div>
+<div id="section-26" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code># esoph_g &lt;- tidyr::gather(esoph, select = c(ncases, ncontrols), value = &quot;Freq&quot;)</code></pre>
+<div class="column-left">
+<pre class="r"><code># vcd::mosaic(key~agegp,data=esoph_g,direction=c(&#39;v&#39;,&#39;h&#39;,&#39;h&#39;))</code></pre>
+</div>
+<div class="column-right">
+<pre class="r"><code># vcd::mosaic(key~alcgp,data=esoph_g,direction=c(&#39;v&#39;,&#39;h&#39;,&#39;h&#39;))</code></pre>
+</div>
+</div>
+<div id="section-27" class="section level2">
+<h2>ロジスティック多重回帰</h2>
+<pre class="r"><code>glm(cbind(ncases, ncases + ncontrols)~.,family=binomial,data=esoph) %&gt;% 
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = cbind(ncases, ncases + ncontrols) ~ ., family = binomial, 
+##     data = esoph)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -1.699  -0.542  -0.216   0.174   1.941  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -2.07518    0.19562  -10.61  &lt; 2e-16 ***
+## agegp.L      2.64625    0.64635    4.09  4.2e-05 ***
+## agegp.Q     -1.25555    0.58631   -2.14    0.032 *  
+## agegp.C      0.19939    0.44439    0.45    0.654    
+## agegp^4      0.04653    0.30482    0.15    0.879    
+## agegp^5     -0.16195    0.18985   -0.85    0.394    
+## alcgp.L      1.15444    0.18787    6.14  8.0e-10 ***
+## alcgp.Q     -0.24924    0.16984   -1.47    0.142    
+## alcgp.C      0.21191    0.15172    1.40    0.162    
+## tobgp.L      0.43387    0.18034    2.41    0.016 *  
+## tobgp.Q      0.00175    0.17642    0.01    0.992    
+## tobgp.C      0.11454    0.17787    0.64    0.520    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 169.577  on 87  degrees of freedom
+## Residual deviance:  45.014  on 76  degrees of freedom
+## AIC: 223.5
+## 
+## Number of Fisher Scoring iterations: 6</code></pre>
+</div>
+<div id="section-28" class="section level2">
+<h2>ロジスティック回帰（順序なし因子）</h2>
+<pre class="r"><code>esoph_rev &lt;- esoph %&gt;%
+  dplyr::mutate_at(vars(ends_with(&quot;gp&quot;)), list(~factor(., ordered = F)))
+glm(cbind(ncases, ncases + ncontrols)~.,family=binomial,data=esoph_rev) %&gt;%
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = cbind(ncases, ncases + ncontrols) ~ ., family = binomial, 
+##     data = esoph_rev)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -1.699  -0.542  -0.216   0.174   1.941  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)   -5.659      1.024   -5.53  3.3e-08 ***
+## agegp35-44     1.536      1.064    1.44   0.1488    
+## agegp45-54     2.732      1.021    2.68   0.0074 ** 
+## agegp55-64     3.042      1.016    2.99   0.0028 ** 
+## agegp65-74     3.328      1.020    3.26   0.0011 ** 
+## agegp75+       3.291      1.056    3.12   0.0018 ** 
+## alcgp40-79     0.955      0.234    4.07  4.6e-05 ***
+## alcgp80-119    1.187      0.256    4.64  3.4e-06 ***
+## alcgp120+      1.644      0.270    6.08  1.2e-09 ***
+## tobgp10-19     0.295      0.197    1.49   0.1351    
+## tobgp20-29     0.335      0.235    1.42   0.1545    
+## tobgp30+       0.633      0.256    2.47   0.0135 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 169.577  on 87  degrees of freedom
+## Residual deviance:  45.014  on 76  degrees of freedom
+## AIC: 223.5
+## 
+## Number of Fisher Scoring iterations: 6</code></pre>
+</div>
+</div>
+<div id="airquality-" class="section level1">
+<h1>統計解析サンプル airquality<br> — 多重ロジスティック回帰</h1>
+<p>##データ概観</p>
+<pre class="r"><code>data(&#39;airquality&#39;)
+airquality &lt;- airquality %&gt;%
+  dplyr::mutate(
+    Month = factor(Month),
+    Day = row_number()
+    )
+summary(airquality)</code></pre>
+<pre><code>##      Ozone          Solar.R         Wind            Temp      Month 
+##  Min.   :  1.0   Min.   :  7   Min.   : 1.70   Min.   :56.0   5:31  
+##  1st Qu.: 18.0   1st Qu.:116   1st Qu.: 7.40   1st Qu.:72.0   6:30  
+##  Median : 31.5   Median :205   Median : 9.70   Median :79.0   7:31  
+##  Mean   : 42.1   Mean   :186   Mean   : 9.96   Mean   :77.9   8:31  
+##  3rd Qu.: 63.2   3rd Qu.:259   3rd Qu.:11.50   3rd Qu.:85.0   9:30  
+##  Max.   :168.0   Max.   :334   Max.   :20.70   Max.   :97.0         
+##  NA&#39;s   :37      NA&#39;s   :7                                          
+##       Day     
+##  Min.   :  1  
+##  1st Qu.: 39  
+##  Median : 77  
+##  Mean   : 77  
+##  3rd Qu.:115  
+##  Max.   :153  
+## </code></pre>
+<div id="section-29" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code>ggpairs(dplyr::select(airquality, -Day))</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-35-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-30" class="section level2">
+<h2>時系列</h2>
+<pre class="r"><code># ggplot(tidyr::gather(airquality, select = c(-Day, -Month))) +
+#   geom_line(aes(Day, value, colour = key)) +
+#   facet_wrap(~key, scale = &quot;free_y&quot;)</code></pre>
+</div>
+<div id="section-31" class="section level2">
+<h2>重回帰</h2>
+<pre class="r"><code>glm(Ozone~.-Day,family=gaussian,data=airquality) %&gt;%
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Ozone ~ . - Day, family = gaussian, data = airquality)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -40.34  -13.49   -3.17   10.40   92.69  
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -74.2348    26.1018   -2.84   0.0054 ** 
+## Solar.R       0.0522     0.0237    2.21   0.0296 *  
+## Wind         -3.1087     0.6601   -4.71  7.8e-06 ***
+## Temp          1.8751     0.3407    5.50  2.7e-07 ***
+## Month6      -14.7590     9.1227   -1.62   0.1088    
+## Month7       -8.7486     7.8291   -1.12   0.2664    
+## Month8       -4.1965     8.1469   -0.52   0.6076    
+## Month9      -15.9673     6.6556   -2.40   0.0182 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for gaussian family taken to be 429)
+## 
+##     Null deviance: 121802  on 110  degrees of freedom
+## Residual deviance:  44231  on 103  degrees of freedom
+##   (42 observations deleted due to missingness)
+## AIC: 997.6
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+</div>
+<div id="section-32" class="section level2">
+<h2>ロジスティック回帰</h2>
+<pre class="r"><code>airquality_bin &lt;- dplyr::mutate(airquality, Ozone = if_else(Ozone &gt; 50, T, F))
+
+glm(Ozone~.-Day,family=gaussian,data=airquality) %&gt;%
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Ozone ~ . - Day, family = gaussian, data = airquality)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -40.34  -13.49   -3.17   10.40   92.69  
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -74.2348    26.1018   -2.84   0.0054 ** 
+## Solar.R       0.0522     0.0237    2.21   0.0296 *  
+## Wind         -3.1087     0.6601   -4.71  7.8e-06 ***
+## Temp          1.8751     0.3407    5.50  2.7e-07 ***
+## Month6      -14.7590     9.1227   -1.62   0.1088    
+## Month7       -8.7486     7.8291   -1.12   0.2664    
+## Month8       -4.1965     8.1469   -0.52   0.6076    
+## Month9      -15.9673     6.6556   -2.40   0.0182 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for gaussian family taken to be 429)
+## 
+##     Null deviance: 121802  on 110  degrees of freedom
+## Residual deviance:  44231  on 103  degrees of freedom
+##   (42 observations deleted due to missingness)
+## AIC: 997.6
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+</div>
+<div id="section-33" class="section level2">
+<h2>主成分分析</h2>
+<pre class="r"><code>pca_airquality &lt;- airquality %&gt;%
+  na.omit() %&gt;%
+  .[c(&#39;Solar.R&#39;,&#39;Wind&#39;,&#39;Temp&#39;)] %&gt;%
+  prcomp(scale. = T)
+
+summary(pca_airquality)</code></pre>
+<pre><code>## Importance of components:
+##                          PC1   PC2   PC3
+## Standard deviation     1.280 0.943 0.687
+## Proportion of Variance 0.546 0.297 0.157
+## Cumulative Proportion  0.546 0.843 1.000</code></pre>
+</div>
+<div id="section-34" class="section level2">
+<h2>主成分分析結果の代入</h2>
+<pre class="r"><code>airquality_rev &lt;- airquality %&gt;%
+  na.omit() %&gt;%
+  dplyr::transmute(
+    Ozone=cut(Ozone,breaks=c(-Inf,50,Inf)),
+    Weather_1=as.vector(pca_airquality$x[,1]),
+    Weather_2=as.vector(pca_airquality$x[,2]),
+    Weather_3=as.vector(pca_airquality$x[,3]),
+    Month
+  )</code></pre>
+</div>
+<div id="section-35" class="section level2">
+<h2>プロット</h2>
+<pre class="r"><code>ggpairs(airquality_rev)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-41-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-36" class="section level2">
+<h2>多重ロジスティック回帰</h2>
+<pre class="r"><code>glm(Ozone~.,family=binomial,data=airquality_rev) %&gt;%
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Ozone ~ ., family = binomial, data = airquality_rev)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.1609  -0.1226  -0.0058   0.0389   2.1464  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)   -1.702      1.614   -1.05  0.29163    
+## Weather_1     -4.820      1.289   -3.74  0.00018 ***
+## Weather_2      1.704      0.713    2.39  0.01680 *  
+## Weather_3      3.136      1.233    2.54  0.01098 *  
+## Month6        -3.573      2.433   -1.47  0.14194    
+## Month7        -2.053      1.935   -1.06  0.28884    
+## Month8        -2.007      2.028   -0.99  0.32236    
+## Month9        -6.353      3.187   -1.99  0.04624 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 133.336  on 110  degrees of freedom
+## Residual deviance:  37.757  on 103  degrees of freedom
+## AIC: 53.76
+## 
+## Number of Fisher Scoring iterations: 8</code></pre>
+</div>
+</div>
+<div id="section-37" class="section level1">
+<h1>数値解析サンプル<br> — 信号解析</h1>
+<div id="section-38" class="section level2">
+<h2>データ読み込み</h2>
+<p>16Hzサンプリングデータ30秒</p>
+<pre class="r"><code>v &lt;- read.csv(&#39;vib.sample.csv&#39;) %&gt;%
+  dplyr::mutate(t = seq(0,30-1/16,1/16))
+
+ggplot(v,aes(t,x))+geom_line()+
+  scale_x_continuous(name=&#39;time (s)&#39;)+
+  scale_y_continuous(name=&#39;amplitude&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-43-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="fft" class="section level2">
+<h2>FFT</h2>
+<pre class="r"><code>x_fft &lt;- fft(c(v$x,rep(0,1024-nrow(v))))
+
+v_f &lt;- data.frame(
+  f &lt;- 1:512/512*8,
+  l &lt;- 20*log10(abs(x_fft[1:512]))
+)
+
+ggplot(v_f,aes(f,l))+geom_line()+
+  scale_x_continuous(name=&#39;frequency (Hz)&#39;)+
+  scale_y_continuous(name=&#39;Spectrum level&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-44-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-39" class="section level2">
+<h2>アップサンプリング，プロット</h2>
+<pre class="r"><code>v_up &lt;- data.frame(
+  t = seq(0,30-1/16/4,1/16/4),
+  x = as.vector(rbind(matrix(v$x,nrow=1),0,0,0))
+)
+
+ggplot(v_up,aes(t,x))+geom_line()+
+  scale_x_continuous(name=&#39;time (s)&#39;)+
+  scale_y_continuous(name=&#39;amplitude&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-45-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-40" class="section level2">
+<h2>アップサンプリング，周波数</h2>
+<pre class="r"><code>x_up_fft &lt;- fft(c(v_up$x,rep(0,4096-nrow(v_up))))
+
+v_up_f &lt;- data.frame(
+  f &lt;- 1:2048/2048*8*4,
+  l &lt;- 20*log10(abs(x_up_fft[1:2048]))
+)
+
+ggplot(v_up_f,aes(f,l))+geom_line()+
+  scale_x_continuous(name=&#39;frequency (Hz)&#39;)+
+  scale_y_continuous(name=&#39;Spectrum level&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-46-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-41" class="section level2">
+<h2>ディジタルフィルタ設計</h2>
+<pre class="r"><code>filt_fir &lt;- signal::fir1(n=200,w=c(1.6,7.5)/16/4*2,type=&#39;pass&#39;)
+signal::freqz(filt_fir)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-47-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-42" class="section level2">
+<h2>フィルタ適用</h2>
+<pre class="r"><code>v_up_filt &lt;- v_up %&gt;%
+  dplyr::mutate(x_filt = signal::filter(filt_fir,x))
+
+ggplot(v_up_filt,aes(t,x_filt))+geom_line()+
+  scale_x_continuous(name=&#39;time (s)&#39;)+
+  scale_y_continuous(name=&#39;amplitude&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-48-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="fft-1" class="section level2">
+<h2>フィルタ適用後FFT</h2>
+<pre class="r"><code>x_up_filt_fft &lt;- fft(c(v_up_filt$x_filt,rep(0,4096-nrow(v_up_filt))))
+
+v_up_filt_f &lt;- data.frame(
+  f &lt;- 1:2048/2048*8*4,
+  l &lt;- 20*log10(abs(x_up_filt_fft[1:2048]))
+)
+
+ggplot(v_up_filt_f,aes(f,l))+geom_line()+
+  scale_x_continuous(name=&#39;frequency (Hz)&#39;)+
+  scale_y_continuous(name=&#39;Spectrum level&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-49-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="section-43" class="section level2">
+<h2>自己相関係数とピークの計算</h2>
+<pre class="r"><code>acf &lt;- as.vector(acf(v_up_filt$x_filt,lag.max = nrow(v_up_filt),plot=F)$acf)
+
+v_filt_acf &lt;- v_up_filt %&gt;%
+  dplyr::mutate(acf=acf)
+
+v_filt_acf_pks &lt;- as.data.frame(
+  pracma::findpeaks(v_filt_acf$acf, minpeakdistance = 32)
+  ) %&gt;%
+  dplyr::mutate(
+    x=v_filt_acf$t[V2],
+    y=v_filt_acf$acf[V2]
+  )
+
+knitr::kable(dplyr::filter(v_filt_acf_pks, x &lt; 5))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">V1</th>
+<th align="right">V2</th>
+<th align="right">V3</th>
+<th align="right">V4</th>
+<th align="right">x</th>
+<th align="right">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.671</td>
+<td align="right">59</td>
+<td align="right">47</td>
+<td align="right">70</td>
+<td align="right">0.906</td>
+<td align="right">0.671</td>
+</tr>
+<tr class="even">
+<td align="right">0.498</td>
+<td align="right">116</td>
+<td align="right">104</td>
+<td align="right">128</td>
+<td align="right">1.797</td>
+<td align="right">0.498</td>
+</tr>
+<tr class="odd">
+<td align="right">0.401</td>
+<td align="right">173</td>
+<td align="right">161</td>
+<td align="right">186</td>
+<td align="right">2.688</td>
+<td align="right">0.401</td>
+</tr>
+<tr class="even">
+<td align="right">0.273</td>
+<td align="right">229</td>
+<td align="right">217</td>
+<td align="right">243</td>
+<td align="right">3.562</td>
+<td align="right">0.273</td>
+</tr>
+<tr class="odd">
+<td align="right">0.188</td>
+<td align="right">285</td>
+<td align="right">274</td>
+<td align="right">302</td>
+<td align="right">4.438</td>
+<td align="right">0.188</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="section-44" class="section level2">
+<h2>自己相関プロット</h2>
+<pre class="r"><code>ggplot(v_filt_acf,aes(t,acf))+geom_line()+
+  geom_point(data=v_filt_acf_pks,aes(x,y),colour=&#39;red&#39;,shape=1,size=4)+
+  scale_x_continuous(name=&#39;time (s)&#39;,limits=c(0,5))+
+  scale_y_continuous(name=&#39;ACF&#39;)</code></pre>
+<p><img src="r-example_files/figure-html/unnamed-chunk-51-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="enjoy" class="section level1">
+<h1>enjoy!</h1>
+<div id="section-45" class="section level2">
+<h2>環境</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 3.6.2 (2019-12-12)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 10 x64 (build 17763)
+## 
+## Matrix products: default
+## 
+## locale:
+## [1] LC_COLLATE=Japanese_Japan.932  LC_CTYPE=Japanese_Japan.932   
+## [3] LC_MONETARY=Japanese_Japan.932 LC_NUMERIC=C                  
+## [5] LC_TIME=Japanese_Japan.932    
+## 
+## attached base packages:
+## [1] grid      stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] clinfun_1.0.15   car_3.0-3        carData_3.0-2    sf_0.8-1        
+##  [5] raster_2.8-19    sp_1.3-1         vcd_1.4-4        ggmosaic_0.2.1  
+##  [9] gridExtra_2.3    htmltools_0.3.6  revealjs_0.9     DiagrammeR_1.0.1
+## [13] GGally_1.4.0     DT_0.6           leaflet_2.0.2    forcats_0.4.0   
+## [17] stringr_1.4.0    dplyr_0.8.4      purrr_0.3.3      readr_1.3.1     
+## [21] tidyr_1.0.2      tibble_2.1.3     ggplot2_3.2.1    tidyverse_1.3.0 
+## 
+## loaded via a namespace (and not attached):
+##  [1] colorspace_1.4-1   class_7.3-15       rio_0.5.16        
+##  [4] fs_1.3.0           rstudioapi_0.10    mvtnorm_1.0-10    
+##  [7] lubridate_1.7.4    xml2_1.2.2         codetools_0.2-16  
+## [10] knitr_1.23         jsonlite_1.6       broom_0.5.2       
+## [13] dbplyr_1.4.2       shiny_1.3.2        compiler_3.6.2    
+## [16] httr_1.4.1         backports_1.1.4    assertthat_0.2.1  
+## [19] lazyeval_0.2.2     cli_1.1.0          later_0.8.0       
+## [22] visNetwork_2.0.7   tools_3.6.2        igraph_1.2.4.1    
+## [25] gtable_0.3.0       glue_1.3.1         reshape2_1.4.3    
+## [28] Rcpp_1.0.1         cellranger_1.1.0   rgexf_0.15.3      
+## [31] vctrs_0.2.2        nlme_3.1-142       crosstalk_1.0.0   
+## [34] lmtest_0.9-37      xfun_0.7           openxlsx_4.1.0.1  
+## [37] rvest_0.3.5        mime_0.7           lifecycle_0.2.0   
+## [40] XML_3.98-1.20      MASS_7.3-51.4      zoo_1.8-6         
+## [43] scales_1.0.0       hms_0.5.3          promises_1.0.1    
+## [46] RColorBrewer_1.1-2 yaml_2.2.0         curl_3.3          
+## [49] downloader_0.4     reshape_0.8.8      stringi_1.4.3     
+## [52] highr_0.8          Rook_1.1-1         e1071_1.7-1       
+## [55] zip_2.0.2          rlang_0.4.4        pkgconfig_2.0.2   
+## [58] pracma_2.2.5       evaluate_0.14      lattice_0.20-38   
+## [61] labeling_0.3       htmlwidgets_1.3    tidyselect_0.2.5  
+## [64] plyr_1.8.4         magrittr_1.5       R6_2.4.0          
+## [67] generics_0.0.2     DBI_1.0.0          pillar_1.4.3      
+## [70] haven_2.2.0        foreign_0.8-72     withr_2.1.2       
+## [73] units_0.6-3        abind_1.4-5        modelr_0.1.5      
+## [76] crayon_1.3.4       KernSmooth_2.23-16 plotly_4.9.0      
+## [79] rmarkdown_1.12     viridis_0.5.1      readxl_1.3.1      
+## [82] data.table_1.12.2  influenceR_0.1.0   reprex_0.3.0      
+## [85] digest_0.6.18      classInt_0.4-2     xtable_1.8-4      
+## [88] httpuv_1.5.1       brew_1.0-6         signal_0.7-6      
+## [91] munsell_0.5.0      viridisLite_0.3.0</code></pre>
+</div>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

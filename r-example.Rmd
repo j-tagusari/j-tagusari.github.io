@@ -1,18 +1,5 @@
 ---
 title: "Rによる解析例"
-author: "Junta Tagusari"
-date: "2019/07/23"
-output: 
-  revealjs::revealjs_presentation:
-    theme: simple
-    transition: slide
-    reveal_option:
-      slideNumber: true
-      center: true
-    self_contained: false
-    css: "jtstyle.css"
-editor_options: 
-  chunk_output_type: console
 ---
 
 ```{r setup, include = F}
@@ -293,9 +280,9 @@ fisher.test(xtabs(Freq~Gender+Admit, UCBAdmissions))
 性別による差はない
 
 ```{r}
-UCBAdmissions_rev <- tidyr::spread(UCBAdmissions, key = "Admit", value = "Freq")
-glm(cbind(Admitted, Admitted + Rejected) ~ Gender + Dept, 
-    data = UCBAdmissions_rev, family = binomial) %>% summary()
+# UCBAdmissions_rev <- tidyr::spread(UCBAdmissions, key = "Admit", value = "Freq")
+# glm(cbind(Admitted, Admitted + Rejected) ~ Gender + Dept, 
+#     data = UCBAdmissions_rev, family = binomial) %>% summary()
 ```
 
 
@@ -353,13 +340,13 @@ summary(esoph)
 ## プロット
 
 ```{r fig.align = "center", fig.height=4.5}
-esoph_g <- tidyr::gather(esoph, select = c(ncases, ncontrols), value = "Freq")
+# esoph_g <- tidyr::gather(esoph, select = c(ncases, ncontrols), value = "Freq")
 ```
 
 <div class = "column-left">
 
 ```{r fig.align = "center", fig.height=4.5}
-vcd::mosaic(key~agegp,data=esoph_g,direction=c('v','h','h'))
+# vcd::mosaic(key~agegp,data=esoph_g,direction=c('v','h','h'))
 ```
 
 </div>
@@ -368,7 +355,7 @@ vcd::mosaic(key~agegp,data=esoph_g,direction=c('v','h','h'))
 <div class = "column-right">
 
 ```{r fig.align = "center", fig.height=4.5}
-vcd::mosaic(key~alcgp,data=esoph_g,direction=c('v','h','h'))
+# vcd::mosaic(key~alcgp,data=esoph_g,direction=c('v','h','h'))
 ```
 
 </div>
@@ -409,9 +396,9 @@ ggpairs(dplyr::select(airquality, -Day))
 ## 時系列
 
 ```{r fig.align = "center", fig.height=4.5}
-ggplot(tidyr::gather(airquality, select = c(-Day, -Month))) +
-  geom_line(aes(Day, value, colour = key)) +
-  facet_wrap(~key, scale = "free_y")
+# ggplot(tidyr::gather(airquality, select = c(-Day, -Month))) +
+#   geom_line(aes(Day, value, colour = key)) +
+#   facet_wrap(~key, scale = "free_y")
 ```
 
 

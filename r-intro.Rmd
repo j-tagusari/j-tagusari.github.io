@@ -1,5 +1,12 @@
 ---
 title: "R introduction"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
 ---
 
 # 諸設定
