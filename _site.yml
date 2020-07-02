@@ -12,6 +12,6 @@ navbar:
     - text: "Home"
       href: index.html
     - text: "Computing Excercise"
-      href: computing-excer/computing-excer.html
+      href: computing-excer.html
     - text: "R intro"
-      href: r-intro/r-intro.html
+      href: r-intro.html

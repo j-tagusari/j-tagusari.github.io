@@ -1,0 +1,594 @@
+---
+title: "Rによる解析例"
+author: "Junta Tagusari"
+date: "2019/07/23"
+output: 
+  revealjs::revealjs_presentation:
+    theme: simple
+    transition: slide
+    reveal_option:
+      slideNumber: true
+      center: true
+    self_contained: false
+    css: "jtstyle.css"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = F}
+library(tidyverse)
+library(leaflet)
+library(DT)
+library(GGally)
+library(DiagrammeR)
+library(revealjs)
+library(htmltools)
+library(gridExtra)
+library(ggmosaic)
+library(vcd)
+library(raster)
+library(sf)
+library(car)
+library(clinfun) # for jonckheere.test
+
+set.seed(123)
+
+options(digits = 3)
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 20))
+)
+
+
+dat_hd <- read.table("heart/heart.dat", header = T) %>%
+  dplyr::mutate(
+    sex = factor(sex, labels = c("female", "male")),
+    cp  = factor(cp, labels = c("typ_ang", "atyp_ang", "non_ang", "asymp")),
+    fbs = factor(fbs, labels = c("<120", ">120")),
+    restecg = factor(restecg, labels = c("norm", "st_abnorm", "lv_hypt")),
+    exang = factor(exang, labels = c("no", "yes")),
+    slope = factor(slope, labels = c("up", "flat", "down")),
+    thal  = factor(thal, labels= c("norm", "fdef", "rdef")),
+    hd = factor(hd, labels = c("abs", "prs"))
+  )
+
+```
+
+
+# 統計解析サンプル car<br> --- 連続×連続の相関解析
+
+## データ概観
+
+車の速度と制動距離に関するデータ．単位を変換しておく．
+
+```{r}
+data(cars)
+
+cars <- cars %>%
+  dplyr::mutate(
+    cars$speed <- cars$speed*1.60934,
+    cars$dist  <- cars$dist*0.3048
+  )
+
+summary(cars)
+```
+
+## プロット
+```{r fig.align="center", fig.height=4.5}
+ggplot(cars,aes(speed,dist)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  scale_x_continuous(name='speed (km/h)')+
+  scale_y_continuous(name='braking distance (m)')
+```
+
+## 順位相関係数
+```{r}
+cor.test(~speed+dist,data=cars,method='spearman')
+```
+
+
+## 単線形回帰
+
+```{r}
+lm_car <- lm(dist~speed,data=cars)
+summary(lm_car)
+```
+
+
+# 統計解析サンプル Iris<br> --- カテゴリ×連続
+
+## データ概観
+
+
+```{r iris}
+data(iris)
+summary(iris)
+```
+
+## プロット
+
+```{r fig.align="center", fig.height=4.5}
+ggplot(iris,aes(Species,Sepal.Length))+
+  geom_violin(width=0.2)+
+  geom_jitter(width=0.2)+theme_bw()+
+  theme(axis.title=element_text(size=20),axis.text=element_text(size=20))
+```
+
+## t検定
+```{r}
+t.test(Sepal.Length~Species,data=iris,subset=Species!="setosa",var.equal = F)
+```
+
+## wilcoxon検定
+```{r}
+wilcox.test(Sepal.Length~Species,data=iris,subset=Species!="setosa",var.equal = F)
+```
+
+
+## ANOVA
+```{r}
+Anova(lm(Sepal.Length~Species, data = iris))
+```
+
+## Kruskal-Wallis検定
+```{r}
+kruskal.test(Sepal.Length~Species, data = iris)
+```
+
+
+## t検定多重比較（Holm）
+```{r}
+pairwise.t.test(iris$Sepal.Length,iris$Species,p.adjust.method = 'holm')
+```
+
+
+## wilcoxon検定多重比較（Holm）
+```{r}
+pairwise.wilcox.test(iris$Sepal.Length,iris$Species,p.adjust.method = 'holm')
+```
+
+# 統計解析サンプル ToothGrowth<br> --- カテゴリ×連続，交互作用
+
+## データ概観
+
+
+
+```{r toothgrowth}
+data("ToothGrowth")
+
+ToothGrowth <- ToothGrowth %>%
+  dplyr::mutate(dose = factor(dose))
+
+summary(ToothGrowth)
+
+```
+
+## プロット
+```{r fig.align="center", fig.height=4.5}
+ggplot(ToothGrowth,aes(dose,len,colour=supp)) + 
+  geom_jitter(width=0.2, height = 0)+
+  scale_x_discrete(name='Supplement dose (mg/day)')+
+  scale_y_continuous(name=expression(paste('Odeonblasts length (',mu,'m)'))) +
+  scale_colour_hue(name='Supplement')
+
+```
+
+## ANOVA
+
+```{r}
+Anova(lm( len ~ supp * dose, data=ToothGrowth ) )
+```
+
+## Jonckheere-Terpstra検定
+```{r}
+jonckheere.test(ToothGrowth$len,as.numeric(ToothGrowth$dose))
+```
+
+
+
+
+# 統計解析サンプル Titanic<br> --- カテゴリ×カテゴリ
+
+## データ概観
+```{r titanic}
+data("Titanic")
+Titanic <- as.data.frame(Titanic)
+summary(Titanic)
+xtabs(Freq~Sex + Survived, Titanic)
+```
+
+## プロット
+
+mosaicでは，Freq列があると自動で読み込んでくれる
+
+```{r fig.align="center", fig.height=4.5}
+vcd::mosaic(Survived~Class+Sex,data=Titanic,direction=c('v','h','h'))
+```
+
+## fisherの正確検定（性別×生存）
+```{r}
+fisher.test(xtabs(Freq~Sex + Survived, Titanic))
+```
+
+## カイ二乗検定（性別×生存）
+```{r}
+chisq.test(xtabs(Freq~Sex + Survived, Titanic))
+```
+
+## カイ二乗検定（船室×生存）
+
+Fisherの正確検定は，計算量が多すぎてできない
+
+```{r}
+chisq.test(xtabs(Freq~Class+ Survived, Titanic))
+```
+
+
+
+## トレンド検定（船室×生存）
+
+```{r}
+mat <- xtabs(Freq~Class+ Survived, Titanic)
+prop.trend.test(mat[,1], apply(mat, 1, sum))
+```
+
+
+# 統計解析サンプル Spaceshuttle<br> --- ロジスティック単回帰
+
+## データ概観
+```{r spaceshuttle}
+data('SpaceShuttle')
+
+SpaceShuttle <- SpaceShuttle %>%
+  dplyr::mutate(
+    Fail = if_else(Fail == "yes", T, F),
+    Pressure = factor(Pressure)
+  ) %>%
+  na.omit()
+
+summary(SpaceShuttle)
+```
+
+## プロット
+```{r fig.align = "center", fig.height=4.5}
+ggplot(SpaceShuttle,aes(Temperature,as.numeric(Fail))) + 
+  geom_jitter(width=0,height=0.02, aes(colour = Pressure)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))+
+  scale_y_continuous(name='Fail',breaks=c(0,1))
+```
+
+## ロジスティック単回帰
+```{r}
+glm(Fail~Temperature,family=binomial,data=SpaceShuttle) %>% summary()
+```
+
+
+
+# 統計解析サンプル UCBAdmissions<br> --- simpson's paradox
+
+## データ概観
+
+```{r ucbadmissions}
+data('UCBAdmissions')
+UCBAdmissions <- as.data.frame(UCBAdmissions) 
+summary(UCBAdmissions)
+```
+
+## プロット
+```{r fig.align = "center", fig.height=4.5}
+vcd::mosaic(Admit~Gender+Dept,data=UCBAdmissions,direction=c('v','v','h'))
+```
+
+## fisherの正確検定（性別×合格）
+
+女性は合格しにくい？
+
+```{r}
+fisher.test(xtabs(Freq~Gender+Admit, UCBAdmissions))
+```
+
+## 多重ロジスティック回帰（性別×学部×合格）
+
+性別による差はない
+
+```{r}
+UCBAdmissions_rev <- tidyr::spread(UCBAdmissions, key = "Admit", value = "Freq")
+glm(cbind(Admitted, Admitted + Rejected) ~ Gender + Dept, 
+    data = UCBAdmissions_rev, family = binomial) %>% summary()
+```
+
+
+
+# 統計解析サンプル wine<br> --- 主成分分析，クラスター分析
+
+## データ概観
+```{r wine}
+wine <- read.csv("wine.dat")
+summary(wine)
+```
+
+## 主成分分析
+```{r}
+wineClasses <- factor(wine$Cvs)
+pca_wine <- prcomp(wine[,-1],scale.=T)
+summary(pca_wine)
+```
+
+## 各因子への変数の寄与
+
+```{r}
+pca_wine$rotation[,1:5]
+```
+
+## 主因子によるワイン等級の説明
+```{r fig.align = "center", fig.height=4.5}
+plot(pca_wine$x[,1:2], col = wineClasses)
+```
+
+## クラスター分析デンドログラム
+```{r fig.align = "center", fig.height=4.5}
+wine_clust <- hclust(dist(wine[,-1]))
+plot(wine_clust)
+```
+
+## クラスター分析による等級分け
+```{r}
+wine_clust_3 <- cutree(wine_clust,3)
+wine_ctbl <- table(wineClasses,wine_clust_3)
+wine_ctbl
+```
+
+
+# 統計解析サンプル Esoph<br> --- 多重ロジスティック回帰
+
+## データ概観
+
+gpはordered.factor型なので注意
+```{r esoph}
+data('esoph')
+summary(esoph)
+```
+
+## プロット
+
+```{r fig.align = "center", fig.height=4.5}
+esoph_g <- tidyr::gather(esoph, select = c(ncases, ncontrols), value = "Freq")
+```
+
+<div class = "column-left">
+
+```{r fig.align = "center", fig.height=4.5}
+vcd::mosaic(key~agegp,data=esoph_g,direction=c('v','h','h'))
+```
+
+</div>
+
+
+<div class = "column-right">
+
+```{r fig.align = "center", fig.height=4.5}
+vcd::mosaic(key~alcgp,data=esoph_g,direction=c('v','h','h'))
+```
+
+</div>
+
+## ロジスティック多重回帰
+```{r}
+glm(cbind(ncases, ncases + ncontrols)~.,family=binomial,data=esoph) %>% 
+  summary()
+```
+
+## ロジスティック回帰（順序なし因子）
+```{r}
+esoph_rev <- esoph %>%
+  dplyr::mutate_at(vars(ends_with("gp")), list(~factor(., ordered = F)))
+glm(cbind(ncases, ncases + ncontrols)~.,family=binomial,data=esoph_rev) %>%
+  summary()
+```
+
+# 統計解析サンプル airquality<br> --- 多重ロジスティック回帰
+
+##データ概観
+```{r airquality}
+data('airquality')
+airquality <- airquality %>%
+  dplyr::mutate(
+    Month = factor(Month),
+    Day = row_number()
+    )
+summary(airquality)
+```
+
+## プロット
+
+```{r warning = F, message = F, fig.align="center", fig.height = 4.5}
+ggpairs(dplyr::select(airquality, -Day))
+```
+
+## 時系列
+
+```{r fig.align = "center", fig.height=4.5}
+ggplot(tidyr::gather(airquality, select = c(-Day, -Month))) +
+  geom_line(aes(Day, value, colour = key)) +
+  facet_wrap(~key, scale = "free_y")
+```
+
+
+## 重回帰
+
+```{r}
+glm(Ozone~.-Day,family=gaussian,data=airquality) %>%
+  summary()
+```
+
+## ロジスティック回帰
+```{r}
+airquality_bin <- dplyr::mutate(airquality, Ozone = if_else(Ozone > 50, T, F))
+
+glm(Ozone~.-Day,family=gaussian,data=airquality) %>%
+  summary()
+```
+
+## 主成分分析
+```{r}
+pca_airquality <- airquality %>%
+  na.omit() %>%
+  .[c('Solar.R','Wind','Temp')] %>%
+  prcomp(scale. = T)
+
+summary(pca_airquality)
+```
+
+## 主成分分析結果の代入
+
+```{r}
+airquality_rev <- airquality %>%
+  na.omit() %>%
+  dplyr::transmute(
+    Ozone=cut(Ozone,breaks=c(-Inf,50,Inf)),
+    Weather_1=as.vector(pca_airquality$x[,1]),
+    Weather_2=as.vector(pca_airquality$x[,2]),
+    Weather_3=as.vector(pca_airquality$x[,3]),
+    Month
+  )
+
+```
+
+## プロット
+```{r warning = F, message = F, fig.align="center", fig.height = 4.5}
+ggpairs(airquality_rev)
+```
+
+## 多重ロジスティック回帰
+```{r}
+glm(Ozone~.,family=binomial,data=airquality_rev) %>%
+  summary()
+```
+
+
+# 数値解析サンプル<br> --- 信号解析
+
+## データ読み込み
+
+16Hzサンプリングデータ30秒
+
+```{r, fig.align="center", fig.height=4}
+v <- read.csv('vib.sample.csv') %>%
+  dplyr::mutate(t = seq(0,30-1/16,1/16))
+
+ggplot(v,aes(t,x))+geom_line()+
+  scale_x_continuous(name='time (s)')+
+  scale_y_continuous(name='amplitude')
+```
+
+## FFT
+
+```{r, fig.align="center", fig.height=4}
+x_fft <- fft(c(v$x,rep(0,1024-nrow(v))))
+
+v_f <- data.frame(
+  f <- 1:512/512*8,
+  l <- 20*log10(abs(x_fft[1:512]))
+)
+
+ggplot(v_f,aes(f,l))+geom_line()+
+  scale_x_continuous(name='frequency (Hz)')+
+  scale_y_continuous(name='Spectrum level')
+```
+
+
+## アップサンプリング，プロット
+
+```{r, fig.align = "center", fig.height = 4}
+v_up <- data.frame(
+  t = seq(0,30-1/16/4,1/16/4),
+  x = as.vector(rbind(matrix(v$x,nrow=1),0,0,0))
+)
+
+ggplot(v_up,aes(t,x))+geom_line()+
+  scale_x_continuous(name='time (s)')+
+  scale_y_continuous(name='amplitude')
+```
+
+
+## アップサンプリング，周波数
+
+```{r, fig.align = "center", fig.height = 4}
+x_up_fft <- fft(c(v_up$x,rep(0,4096-nrow(v_up))))
+
+v_up_f <- data.frame(
+  f <- 1:2048/2048*8*4,
+  l <- 20*log10(abs(x_up_fft[1:2048]))
+)
+
+ggplot(v_up_f,aes(f,l))+geom_line()+
+  scale_x_continuous(name='frequency (Hz)')+
+  scale_y_continuous(name='Spectrum level')
+```
+
+## ディジタルフィルタ設計
+```{r, fig.align = "center", fig.height = 4}
+filt_fir <- signal::fir1(n=200,w=c(1.6,7.5)/16/4*2,type='pass')
+signal::freqz(filt_fir)
+```
+
+## フィルタ適用
+```{r, fig.align = "center", fig.height = 4}
+v_up_filt <- v_up %>%
+  dplyr::mutate(x_filt = signal::filter(filt_fir,x))
+
+ggplot(v_up_filt,aes(t,x_filt))+geom_line()+
+  scale_x_continuous(name='time (s)')+
+  scale_y_continuous(name='amplitude')
+```
+
+## フィルタ適用後FFT
+```{r, fig.align = "center", fig.height = 4}
+x_up_filt_fft <- fft(c(v_up_filt$x_filt,rep(0,4096-nrow(v_up_filt))))
+
+v_up_filt_f <- data.frame(
+  f <- 1:2048/2048*8*4,
+  l <- 20*log10(abs(x_up_filt_fft[1:2048]))
+)
+
+ggplot(v_up_filt_f,aes(f,l))+geom_line()+
+  scale_x_continuous(name='frequency (Hz)')+
+  scale_y_continuous(name='Spectrum level')
+```
+
+
+## 自己相関係数とピークの計算
+```{r}
+acf <- as.vector(acf(v_up_filt$x_filt,lag.max = nrow(v_up_filt),plot=F)$acf)
+
+v_filt_acf <- v_up_filt %>%
+  dplyr::mutate(acf=acf)
+
+v_filt_acf_pks <- as.data.frame(
+  pracma::findpeaks(v_filt_acf$acf, minpeakdistance = 32)
+  ) %>%
+  dplyr::mutate(
+    x=v_filt_acf$t[V2],
+    y=v_filt_acf$acf[V2]
+  )
+
+knitr::kable(dplyr::filter(v_filt_acf_pks, x < 5))
+```
+
+## 自己相関プロット
+```{r, fig.align = "center", fig.height = 4.5, warning = F}
+ggplot(v_filt_acf,aes(t,acf))+geom_line()+
+  geom_point(data=v_filt_acf_pks,aes(x,y),colour='red',shape=1,size=4)+
+  scale_x_continuous(name='time (s)',limits=c(0,5))+
+  scale_y_continuous(name='ACF')
+```
+
+
+# enjoy!
+
+## 環境
+```{r env}
+sessionInfo()
+```
+

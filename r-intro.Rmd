@@ -1,0 +1,916 @@
+---
+title: "R introduction"
+---
+
+# 諸設定
+
+## ライブラリの読み込み
+
+```{r setup, message = F}
+library(tidyverse)
+library(leaflet)
+library(DT)
+library(GGally)
+library(DiagrammeR)
+library(revealjs)
+library(htmltools)
+library(gridExtra)
+library(ggmosaic)
+library(vcd)
+library(raster)
+library(sf)
+library(car)
+library(clinfun) # for jonckheere.test
+```
+
+## 変数の読み込み
+```{r}
+set.seed(123)
+
+options(digits = 3)
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 20))
+)
+
+
+dat_hd <- read.table("heart/heart.dat", header = T) %>%
+  dplyr::mutate(
+    sex = factor(sex, labels = c("female", "male")),
+    cp  = factor(cp, labels = c("typ_ang", "atyp_ang", "non_ang", "asymp")),
+    fbs = factor(fbs, labels = c("<120", ">120")),
+    restecg = factor(restecg, labels = c("norm", "st_abnorm", "lv_hypt")),
+    exang = factor(exang, labels = c("no", "yes")),
+    slope = factor(slope, labels = c("up", "flat", "down")),
+    thal  = factor(thal, labels= c("norm", "fdef", "rdef")),
+    hd = factor(hd, labels = c("abs", "prs"))
+  )
+
+```
+
+# R is a free software environment for statistical computing and graphics
+
+## 総合プラットフォームとしてのR
+
+ - **データ整理・変換（ラングリング）**
+    - 雑多なデータの変換や要約値の計算
+ - **可視化とモデル化**
+    - データを人間が解釈可能な形へと変換する（可視化）．<br>データに基づく統計モデルを構築する（モデル化）．
+ - **コミュニケーション**
+    - 分析結果を他の人に伝える．
+ - **プログラミング**
+    - 明示的な処理プロセスのもと，共通タスクを自動化したり，新たな問題を解いたりする．
+
+## このスライドの目的：<br> Rの有用な機能を知ること
+
+ - 「Rでこんなことができる」と知らなければ，自分で使うメリットを想像できない．
+ - Rの利用価値は統計解析に限らない．このスライドでは，Rによる簡単な計算やデータの可視化を中心に，解析例を交えて紹介する．
+ - ソースコードの解説は行わない．興味があれば，このファイルのソース（Rintroduction.Rmd）や様々な書籍を参照すること．
+
+# R base <br>--- Rの標準的機能
+
+
+## ベクトル・行列
+
+Rでは，ベクトルや行列をそのまま扱える．<br>
+数学的演算（たとえば，積，逆行列）は既に用意されている．
+
+<div class = "column-left">
+```{r}
+a <- c(1,2,3)
+```
+
+```{r echo = F}
+a
+```
+
+
+```{r}
+M <- matrix(
+  c(2,3,5,7,11,13,17,19,23), 
+  nrow = 3)
+```
+
+```{r echo = F}
+M
+```
+</div>
+
+<div class = "column-right">
+```{r}
+M %*% a
+solve(M)
+```
+</div>
+
+
+## ユーザー定義関数
+
+他のプログラミング言語同様，自分で関数を定義できる．<br>
+そのため，おおよそ考え付く全ての計算が可能．
+
+```{r}
+funcA <- function(var1, var2){
+  return(var1 * 2 + var2 * 0.1)
+}
+```
+
+```{r}
+funcA(var1 = 10, var2 = 2)
+```
+
+## データフレーム
+
+統計解析等では「データフレーム」を利用する．<br>
+データフレームは，列が変数，行がデータ，を表す．
+
+```{r}
+d <- data.frame(x = runif(10), y = runif(10)+0.3)
+```
+
+```{r echo = F}
+knitr::kable(d, digits = 3)
+```
+
+## クロス集計
+
+ちょっとしたクロス集計（度数分布）は，1行でできる．<br>
+たとえば，cpの度数分布．
+
+```{r}
+xtabs(~cp, dat_hd)
+```
+
+```{r}
+xtabs(~cp+hd, dat_hd)
+```
+
+## プロット
+
+EZRで見た様なプロット機能が使える．<br>
+ただし，今はより多機能のggplotを使うのが一般的（後述）．
+
+```{r fig.align="center", fig.height=4.5}
+boxplot(d$x, d$y)
+```
+
+## 統計学的検定
+
+EZRで見た様な統計学的検定が利用可能．<br>
+あらゆる詳細な設定が可能で，計算結果の正しさは検証済み．
+
+```{r}
+wilcox.test(d$x,d$y,alternative = "two.sided", mu = 0, paired = F, exact = T)
+```
+
+## 統計モデル
+
+統計モデルも1行で構築できる．
+
+```{r}
+model_hd <- lm(oldpeak ~ cp + mthalach + cp + chol, data = dat_hd)
+summary(model_hd)
+```
+
+## データセット
+
+解析の練習用に色々なデータセットが用意されている．<br>
+たとえば，サプリメントによる歯の成長データToothGrowth．
+
+```{r}
+data("ToothGrowth")
+```
+
+<div class = "column-left">
+
+```{r}
+head(ToothGrowth) %>% knitr::kable()
+```
+
+</div>
+<div class = "column-right">
+
+```{r}
+summary(ToothGrowth)
+```
+
+</div>
+
+
+## データの読み込み
+
+txt，csv，xlsx，1行で必要なものを全て読み込める．
+
+```{r}
+dat <- read.csv("heart/heart.dat", sep = " ")
+str(dat)
+```
+
+## 10000以上の様々なパッケージ
+
+ - 様々な計算がパッケージ化され，CRAN（The Cmprehensive R Archive Network）に公開されている．
+ - パッケージは，誰でも無料でダウンロード・利用・編集ができる．
+ - CRANには，現在，10,000以上のパッケージが登録されている．
+ - パッケージを使えば，複雑な計算であっても，簡単に，時にはパラメータを変えて，計算できる．しかも多くの場合，計算結果は正しい（誤った計算結果は指摘され，修正される）．
+
+
+
+## （例）pracmaパッケージ：様々な数値計算
+
+たとえば，ラグランジュ補間を1つの命令(barylag)で計算可能
+```{r}
+x_d <- c(0,100,200,300,400,500)
+y_d <- c(5.7,1.8,2.7,9.7,4.1,6.2)
+x   <- 0:500
+y   <- pracma::barylag(x_d,y_d,x)
+```
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+ggplot() +
+  geom_line(data = data.frame(x,y), aes(x,y)) +
+  geom_point(data = data.frame(x_d, y_d), aes(x_d, y_d), colour = "red")
+```
+
+## 解析の再現可能性
+
+ - Rによる解析は，解析の元になったデータとスクリプトがあれば，<br>誰でも寸分違わず再現できる．
+ - ソフト側で勝手な操作（例：Wordの数々のお節介）は行われない．
+ - Rmarkdown等の機能を使えば，ウェブページから論文まで，再現可能な「レポート」（スクリプト＋アウトプット）が作成できる．
+ - 世界中の人が，「R」言語でコミュニケーションを始めている！！
+
+
+# tidyverse <br>--- tidyなデータラングリング
+
+
+## tidyデータとは？<span style = "font-size: 50%;">（詳しくはhttps://id.fnshr.info/2017/01/09/tidy-data-intro/）</span>
+
+
+<div class = "column-left">
+**非tidyデータの一例**
+
+ - 変数（地点・時刻・天気）の並びが整然としていない
+ - 人間にはわかりやすくとも，データ解析には適さない
+
+```{r echo = F, fig.align="center", fig.width = 4}
+knitr::include_graphics("img/not-tidy-data-note.png")
+```
+
+</div>
+
+<div class = "column-right">
+
+**tidyデータの一例**
+
+ - 変数が整然と並ぶ
+
+
+```{r echo = F, fig.align="center", fig.width = 3}
+knitr::include_graphics("img/tidy-data-note.png")
+```
+
+</div>
+
+
+
+
+## tidy verse
+
+ - R studio開発者らによって開発された一連のパッケージ．
+ - tidyデータの諸変換（tidyr），データの操作(dplyr，purrr)，<br>グラフ作成（ggplot），等が含まれる．
+ - 特に，データ「群」ごとの解析は<br>エクセルではなかなか実現できない機能のひとつ．
+
+## データ群の計算例①：データ群の作成
+
+ - たとえば，変数supp, dose，lenをもつデータToothGrowthを考える．
+ - suppはカテゴリで，OJとVCがそれぞれ30データ含まれる．カテゴリ毎に計算を行いたい場合，次の様にグループ化できると都合が良い．
+
+
+<div class = "column-left">
+
+グループ化前の例
+
+|supp | dose|  len|
+|:----|----:|----:|
+|VC   |  0.5|  4.2|
+|$\vdots$|$\vdots$|$\vdots$|
+|VC   |  0.5| 11.5|
+|OJ   |  0.5| 15.2|
+|$\vdots$|$\vdots$|$\vdots$|
+|OJ   |  2.0| 23.0|
+
+
+</div>
+<div class = "column-right">
+グループ化後のイメージ
+
+|supp | dose|  len|
+|:----|----:|----:|
+|VC   |  30個のデータ|  30個のデータ|
+|OJ   |  30個のデータ| 30個のデータ|
+
+
+</div>
+
+## データ群の計算例② ：データ群ごとに計算する
+
+ - グループ化したデータgrouped_TGを用意した<br>（計算詳細はソースファイルを見よ）．
+ - データ群ごとに，あらゆる計算が可能．
+ - たとえば，lenの平均，中央値，10パーセンタイル値を求める．
+
+```{r echo =F}
+
+grouped_TG <- ToothGrowth %>%
+  dplyr::group_by(supp) %>%
+  tidyr::nest() 
+
+```
+
+```{r}
+grouped_TG %>%
+  dplyr::mutate(
+    len_ave = purrr::map_dbl(data, ~mean(.x$len)),
+    len_med = purrr::map_dbl(data, ~median(.x$len)),
+    len_qt10 = purrr::map_dbl(data, ~quantile(.x$len, 0.1))
+    )
+```
+
+## 大量のデータを効率的に処理可能
+
+ - エクセルのデータ量上限は約100万行
+ - Rであれば，メモリの許す限りのデータ（今の標準的なPC性能で数十億行×数十列程度）を一度に処理可能．
+ - 「データ群」の活用で，大規模データでも見通しの良い計算が可能．
+ - なお，特殊なパッケージを使えば，より大量のデータ<br>（狭義のビッグデータ）も処理可能．
+
+## その他，tidyverseに関連する特殊データ処理
+
+以下の処理は，エクセルではできないか，曖昧に処理されている．
+
+ - **forcats**：カテゴリ変数の処理
+ - **stringr**：文字列の処理，検索や置換
+ - **lubridate**：日付・時刻の処理
+ - **sf**：GISデータの処理
+
+# ggplot<br> --- あらゆるデータの可視化
+
+## ggplot
+
+ - tidyデータをプロットするツール．
+ - 考え付く事は，おおよそなんでもできる．
+ - ここでは，エクセルではできない特殊なプロットを中心に紹介する．
+
+## pair
+
+講義でも扱った．プロット行列を出力できる．
+
+```{r echo = F, fig.align="center", fig.height = 5.5, message = F}
+ggpairs(
+  dplyr::select(dat_hd,age, sex, cp, hd)
+) +
+  theme(text = element_text(size = 14), axis.text.x = element_text(angle = 90),
+        strip.text.y = element_text(angle = 0))
+```
+
+## box plot / jitter plot
+
+カテゴリ変数に対する連続変数の分布を表す．<br>
+また，適当に値をバラつかせて表示できる．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+f <- function(x) {
+  r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+ggplot(dat_hd, aes(cp, sbp))+
+  stat_summary(fun.data = f, geom = "boxplot") +
+  geom_jitter(height = 0, width = 0.2) 
+```
+ 
+## violin plot / jitter plot
+
+カテゴリ変数に対する連続変数の密度分布を表す．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+ggplot(dat_hd, aes(cp, sbp))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.2) 
+```
+
+## smooth line
+
+連続変数のバラつきと共に，適当な回帰線を示す．
+線形だけではなく任意の関数が指定可能で，95%信頼区間も示せる．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3))
+```
+
+## smooth line (logistic)
+
+ロジスティック回帰分析も（単変量であれば）プロットできてしまう．
+
+```{r echo = F, fig.align = "center", fig.height = 4.5}
+
+data("SpaceShuttle")
+
+ss_rev <- SpaceShuttle %>%
+  dplyr::mutate(Fail = if_else(Fail == "yes", 1,0),
+                Pressure = factor(Pressure)) %>%
+  na.omit()
+
+ggplot(ss_rev, aes(Temperature, Fail)) +
+  geom_point() +
+  geom_smooth(method = "glm", formula = y ~ x, method.args = list(family = binomial)) +
+  ggtitle("O-ring failure in the Space Shuttle")
+
+```
+
+## colour / shape
+
+群ごとに色や形を設定できる．点でも，線でも．
+
+```{r echo = F, fig.align="center", fig.height=4.5}
+ggplot(dat_hd, aes(sbp, chol, colour = cp, shape = hd)) +
+  geom_point(size = 3) 
+```
+
+
+## linerange / error bar
+
+任意のエラーバーや範囲を付けられる．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+
+coef_lm_hd <- broom::tidy(model_hd) %>%
+  dplyr::mutate(
+    fit = estimate,
+    upr = estimate + 1.96 * std.error,
+    lwr = estimate - 1.96 * std.error
+  )
+
+ggplot(coef_lm_hd, aes(term, fit)) +
+  geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.2) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## linerange / error bar
+
+複数ある場合，ずらすこともできる．線も引ける．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+coef_lm_hd_2 <- coef_lm_hd %>%
+  dplyr::mutate(
+    fit = fit * rnorm(6),
+    upr = fit + 0.5*(1+runif(6)),
+    lwr = fit - 0.2*(1+runif(6))
+  )
+
+ggplot(bind_rows(coef_lm_hd, coef_lm_hd_2, .id="grp"), 
+       aes(term, fit, colour = grp, group = grp)) +
+  geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.2,
+                position = position_dodge(width = 0.4)) +
+  geom_point(position = position_dodge(width = 0.4)) +
+  geom_line(position = position_dodge(width = 0.4)) +
+  theme(axis.text.x = element_text(angle = 90))
+
+```
+
+## raster plot
+
+xyzデータをプロットできる．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+# data("volcano")
+# rownames(volcano) <- 0:86
+# colnames(volcano) <- 0:60
+# 
+# df_volcano <- as.data.frame(volcano) %>%
+#   dplyr::mutate(x = row_number() - 1) %>%
+#   tidyr::gather(select = -x, key = "y", value = "height") %>%
+#   dplyr::mutate(y = as.numeric(y))
+# 
+# ggplot(df_volcano, aes(x, y, fill = height)) +
+#   geom_raster() +
+#   scale_fill_gradientn(colours=c("green","yellow","red"))
+
+```
+
+## contour plot
+
+等高線にすることも可能．
+```{r echo = F,fig.align="center", fig.height=4.5}
+
+# df_volcano %>%
+#   raster::rasterFromXYZ() %>%
+#   raster::rasterToContour(levels = c(120,140,160,180)) %>%
+#   st_as_sf() %>%
+#   st_cast("POLYGON") %>%
+#   ggplot() +
+#   geom_sf(aes(fill = level))
+```
+
+
+## mosaic plot
+
+カテゴリ変数の度数分布および偏りを示す．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+ggplot(dat_hd) +
+  geom_mosaic(aes(x = product(thal), fill = cp)) +
+  scale_x_productlist("thal") +
+  scale_y_continuous("cp")
+```
+
+## polar scale
+
+極座標でもプロットできる．
+
+```{r echo = F, fig.align="center", fig.height=4.5}
+
+stat_wind <- read.csv("stat-wind-2018.csv")
+
+ggplot(stat_wind, aes(x =wind_direction_ctg, y = rate, fill = wind_speed_ctg)) + 
+  geom_bar(stat= 'identity', width = 0.8) + 
+  coord_polar(theta = "x",start = -0.2) + 
+  scale_x_discrete('Wind direction') +
+  scale_y_continuous('Rate') +
+  scale_fill_brewer('Wind speed (m/s)', palette = "Set2")+
+  theme(legend.position="bottom")
+```
+
+## facet wrap
+
+任意のプロットを，カテゴリ毎に分けて表示できる．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3)) +
+  facet_wrap(~cp)
+```
+
+## facet grid
+
+左右に並べて表示する．上下に並べることもできる．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3)) +
+  facet_grid(~cp)
+```
+
+## 対数軸，任意の目盛
+
+対数軸はもちろん，任意の場所に任意の目盛を設定できる．
+
+```{r echo = F,fig.align="center", fig.height=4.5}
+
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3)) +
+  scale_x_log10("対数軸", breaks = seq(50,250,10)) +
+  scale_y_continuous("実数軸", breaks = c(150,200,300,500), 
+                     labels = c("位置に", "好きな","ラベルを", "好きな"))
+```
+
+# 統計解析サンプル ToothGrowth<br> --- カテゴリ×連続，交互作用
+
+## データ概観
+
+ - モルモットに異なるサプリメント（supp: OJ/VC）を異なる量（dose）与えた際の歯芽細胞の長さ（len）に関するデータ．
+ - suppやdoseによってlenは異なるのか？
+
+```{r toothgrowth}
+data("ToothGrowth")
+
+str(ToothGrowth)
+
+```
+
+## ggplotで一気にデータを概観！
+
+ - 多少左右にバラけさせて表示
+ - 値の分布とdose/supp/lenの関係を一度に表示できる
+
+```{r fig.align="center", fig.height=4.5}
+ggplot(ToothGrowth,aes(dose,len,colour=supp)) + 
+  geom_jitter(width=0.05, height = 0)
+
+```
+
+## 単回帰を信頼区間付きでプロット
+
+lenがdoseに対して線形とすると・・・
+
+```{r fig.align="center", fig.height=4.5}
+ggplot(ToothGrowth,aes(dose,len)) + 
+  geom_jitter(width=0.05, height = 0, aes(colour = supp))+
+  geom_smooth(method = "lm", formula = y~x) 
+
+```
+
+## 重回帰（交互作用なし）プロット
+
+交互作用がなければ，2つの回帰式は平行．
+
+```{r echo = F}
+
+model_tg <- lm(len ~ dose + supp, ToothGrowth)
+
+d_tg_pred <- data.frame(
+  dose = rep(seq(0.5,2,0.1), 2),
+  supp = rep(c("OJ","VC"), each = 16)
+) %>%
+  bind_cols(
+    predict(model_tg, ., se.fit = T) %>%
+      .[c("fit", "se.fit")]
+  ) %>%
+  dplyr::mutate(
+    upr = fit + 1.96 * se.fit,
+    lwr = fit - 1.96 * se.fit
+  )
+```
+
+```{r echo = F, fig.align="center", fig.height=4.5}
+ggplot(ToothGrowth,aes(dose, colour = supp)) + 
+  geom_ribbon(data = d_tg_pred, aes(ymin = lwr, ymax = upr, fill = supp), alpha = 0.2, colour = NA) +
+  geom_line(data = d_tg_pred, aes(y = fit)) +
+  geom_jitter(width=0.05, height = 0, aes(y = len))
+
+```
+
+
+## 重回帰（交互作用あり）プロット
+
+doseが小さい時にはOJとVCの差は大きいが，doseが大きい時には差は小さい．
+
+```{r echo = F, fig.align="center", fig.height=4.5}
+ggplot(ToothGrowth,aes(dose, len, colour = supp, fill = supp)) + 
+  geom_smooth(method = "lm", alpha = 0.2) +
+  geom_jitter(width=0.05, height = 0, aes(y = len))
+
+```
+
+## 重回帰（交互作用あり，facet）プロット
+
+図を複数に分けて表示することもできる．
+
+```{r echo = F, fig.align="center", fig.height=4.5}
+ggplot(ToothGrowth,aes(dose, len, colour = supp, fill = supp)) + 
+  geom_smooth(method = "lm", alpha = 0.2) +
+  geom_jitter(width=0.05, height = 0, aes(y = len))+
+  facet_wrap(~supp)
+
+```
+
+
+## 重回帰に基づくANOVA（分散分析）
+
+ - lenに対し，supp，doseおよびこれらの交互作用が検出された．
+ - ただし，誤差分布に「正規分布」を仮定していることに注意．
+
+```{r}
+model <- lm(len ~ supp * dose, data=ToothGrowth )
+car::Anova(model)
+```
+
+
+
+# 統計解析サンプル UCBAdmissions<br> --- simpson's paradox
+
+## データ概観
+ - 1973年，カリフォルニア大学バークレー校の大学院入学実績
+ - 女性の合格率が低く，「女性を差別している」という批判を受けた
+ - 本当にそうか？？
+
+```{r ucbadmissions}
+data('UCBAdmissions')
+UCBAdmissions <- as.data.frame(UCBAdmissions) 
+str(UCBAdmissions)
+```
+
+## クロス表によるデータ概観
+
+ - 男性よりも女性の方が合格者数が少ない
+ - ただし，合格率は学部によって大きく異なる
+
+<div class = "column-left">
+
+**性別 vs 合否**
+
+実数
+```{r echo = F}
+xtabs(Freq ~ Admit + Gender, UCBAdmissions) %>% knitr::kable()
+```
+
+
+合否割合
+```{r echo = F}
+xtabs(Freq ~ Admit + Gender, UCBAdmissions) %>% prop.table(2) %>% knitr::kable(digits = 3)
+```
+
+</div>
+
+<div class = "column-right">
+
+**学部 vs 合否**
+
+実数
+```{r echo = F}
+xtabs(Freq ~ Admit + Dept, UCBAdmissions) %>% knitr::kable()
+```
+
+合否割合
+```{r echo = F}
+xtabs(Freq ~ Admit + Dept, UCBAdmissions) %>% prop.table(2)%>% knitr::kable(digits = 2)
+```
+
+</div>
+
+## 統計学的検定
+
+ - 確かに女性の方が合格率が低いが・・・<br>（Fisherの正確検定で不合格オッズ1.84倍）
+ - この結果は，「受験した学部が異なる」事を反映していない．
+ 
+```{r}
+fisher.test(xtabs(Freq~Admit+Gender, UCBAdmissions))
+```
+
+
+
+
+## 多重ロジスティック回帰による解析
+
+学部で調整すると，性別による差は**検出されない**
+
+```{r}
+UCBAdmissions_rev <- tidyr::spread(UCBAdmissions, key = "Admit", value = "Freq")
+model <- glm(cbind(Admitted, Admitted + Rejected) ~ Gender + Dept, data = UCBAdmissions_rev, family = binomial)
+summary(model)
+```
+
+
+
+## 多重ロジスティック回帰モデルの有意性
+
+ - 講義では触れなかったが，多重ロジスティック回帰モデルについて，ANOVAに似た手法で変数の有意性を示せる．
+ - ANOVAとは異なり，「正規分布」等の仮定は用いられていない．
+
+```{r}
+car::Anova(model)
+```
+
+
+## 多変量解析の結果は可視化で一目瞭然
+
+女性の方が高難度の学部に挑戦し，その結果，合格率が下がっている
+ 
+```{r fig.align = "center", fig.height=4.5}
+vcd::mosaic(Admit~Gender+Dept,data=UCBAdmissions,direction=c('v','v','h'))
+```
+
+
+## なお，東京医科大学（2016～2018）では・・・
+
+「入試差別が行われていた」ことが問題になったケース．<br>
+他の交絡因子の可能性は排除できないが，有意に女性合格者が少ない．
+
+```{r}
+d_tokyoika <- data.frame(
+  Gender = factor(rep(c("Male", "Female"), each = 2), levels = c("Male", "Female")),
+  Admit  = rep(c("Admitted", "Rejected"), 2),
+  Freq   = c(470, 6562, 210, 4512)
+)
+
+fisher.test(xtabs(Freq~Admit+Gender, d_tokyoika))
+```
+
+## なお，北大医学部（2016～2018）では・・・
+
+有意水準0.05なら，差は「検出されない」．<br>
+ただし，他の交絡因子の可能性は排除できない．
+
+```{r}
+d_hokudai <- data.frame(
+  Gender = factor(rep(c("Male", "Female"), each = 2), levels = c("Male", "Female")),
+  Admit  = rep(c("Admitted", "Rejected"), 2),
+  Freq   = c(245, 534, 64, 189)
+)
+
+fisher.test(xtabs(Freq~Admit+Gender, d_hokudai))
+```
+
+
+
+
+# その他の様々な可視化ツール
+
+## leaflet
+
+緯度経度を指定して，地図上にプロットできる．
+
+
+```{r echo = F, fig.height=4.5}
+
+sf_sample <-
+  data.frame(
+    lab = c("北大工学部", "クラーク像"),
+    typ = c("eng", "check"),
+    lng = c(141.340346,141.343547),
+    lat = c(43.075973,43.070830)
+  ) %>%
+  st_as_sf(coords = c('lng', 'lat'), crs = 4326)
+
+iconset <- awesomeIconList(
+  eng  = makeAwesomeIcon(icon= 'flag', markerColor = 'blue', iconColor = 'white', 
+                               library = "fa"),
+  check = makeAwesomeIcon(icon= 'check', markerColor = 'blue', iconColor = 'white', library = "fa")
+)
+
+leaflet(sf_sample) %>%
+  addTiles() %>%
+  addAwesomeMarkers(label = ~lab, icon = ~iconset[typ]) %>%
+  div(align = "center")
+```
+
+## 作成例
+
+大気拡散計算（これも簡単なものならRで可能）とあわせると，<br>
+拡散の様子をグラフィカルに表示できる．
+
+
+![](img/anim.gif)
+
+
+
+## Diagramme
+
+任意のダイアグラムが書ける．
+
+```{r echo = F, fig_height = 4.5}
+grViz("
+digraph boxes_and_circles {
+
+  # a 'graph' statement
+  graph [overlap = true, fontsize = 10]
+
+  # several 'node' statements
+  node [shape = box,
+        fontname = Helvetica]
+  A; B; C; D; E; F
+
+  node [shape = circle,
+        fixedsize = true,
+        width = 0.9] // sets as circles
+  1; 2; 3; 4; 5; 6; 7; 8
+
+  # several 'edge' statements
+  A->1 B->2 B->3 B->4 C->A
+  1->D E->A 2->4 1->5 1->F
+  E->6 4->6 5->7 6->7 3->8
+}
+")
+```
+
+## Rmarkdown
+
+ - Rのコードを起点にして，md，html，pdf，等の様々なフォーマットに結果を出力できる．このスライドも，Rを使って作っている．
+ - 「.rmd」ファイルにスクリプトが保存されている．
+ - 再現可能性が確保されている．つまり，データや解析方法が後からでも確認できる．
+
+
+
+
+# まとめ <br> --- Rの利用価値
+
+## EZR/Rの利用価値は統計解析に留まらない
+
+ - **EZRの利用価値**
+    - データ型に応じた分析
+    - 統計解析
+    - データ分布のプロット
+ - **Rの利用価値**
+    - 行列計算をはじめとした数値計算
+    - 大規模データの処理
+    - 綺麗なグラフの作成
+    - 特殊なグラフの作成
+
+
+## 参考文献
+
+ - Hadley Wickham, Garrett Grolemund. 黒川利明訳．<br> Rではじめるデータサイエンス．オライリー・ジャパン．2017．
+ - Winston Chang．石井弓美子他訳．<br>Rグラフィックスクックブック．オライリー・ジャパン．2013．
+
+
+# enjoy!
+
+## 環境
+```{r env}
+sessionInfo()
+```
+
