@@ -1,0 +1,78 @@
+```{r include = F}
+library(tidyverse)
+library(leaflet)
+library(sf)
+library(DiagrammeR)
+library(htmltools)
+
+set.seed(123)
+
+```
+
+# その他の様々な可視化ツール
+
+## leaflet
+
+緯度経度を指定して，地図上にプロットできる．
+
+
+```{r}
+
+sf_sample <-
+  data.frame(
+    lab = c("北大工学部", "クラーク像"),
+    typ = c("eng", "check"),
+    lng = c(141.340346,141.343547),
+    lat = c(43.075973,43.070830)
+  ) %>%
+  st_as_sf(coords = c('lng', 'lat'), crs = 4326)
+
+iconset <- awesomeIconList(
+  eng  = makeAwesomeIcon(icon= 'flag', markerColor = 'blue', iconColor = 'white', 
+                               library = "fa"),
+  check = makeAwesomeIcon(icon= 'check', markerColor = 'blue', iconColor = 'white', library = "fa")
+)
+
+leaflet(sf_sample) %>%
+  addTiles() %>%
+  addAwesomeMarkers(label = ~lab, icon = ~iconset[typ]) %>%
+  div(align = "center")
+```
+
+
+
+## Diagramme
+
+任意のダイアグラムが書ける．
+
+```{r}
+grViz("
+digraph boxes_and_circles {
+
+  # a 'graph' statement
+  graph [overlap = true, fontsize = 10]
+
+  # several 'node' statements
+  node [shape = box,
+        fontname = Helvetica]
+  A; B; C; D; E; F
+
+  node [shape = circle,
+        fixedsize = true,
+        width = 0.9] // sets as circles
+  1; 2; 3; 4; 5; 6; 7; 8
+
+  # several 'edge' statements
+  A->1 B->2 B->3 B->4 C->A
+  1->D E->A 2->4 1->5 1->F
+  E->6 4->6 5->7 6->7 3->8
+}
+")
+```
+
+## Rmarkdown
+
+ - Rのコードを起点にして，md，html，pdf，等の様々なフォーマットに結果を出力できる．このスライドも，Rを使って作っている．
+ - 「.rmd」ファイルにスクリプトが保存されている．
+ - 再現可能性が確保されている．つまり，データや解析方法が後からでも確認できる．
+

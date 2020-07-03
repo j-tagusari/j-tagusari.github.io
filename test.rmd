@@ -1,0 +1,6 @@
+---
+title: test
+---
+
+```{r child = "r-intro/r-othergraphics.rmd"}
+```

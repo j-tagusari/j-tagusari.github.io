@@ -1,0 +1,258 @@
+```{r include = F}
+library(tidyverse)
+library(GGally)
+library(gridExtra)
+library(ggmosaic)
+library(vcd)
+library(sf)
+
+set.seed(123)
+
+options(digits = 3)
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 20))
+)
+
+
+dat_hd <- read.table("heart.dat", header = T) %>%
+  dplyr::mutate(
+    sex = factor(sex, labels = c("female", "male")),
+    cp  = factor(cp, labels = c("typ_ang", "atyp_ang", "non_ang", "asymp")),
+    fbs = factor(fbs, labels = c("<120", ">120")),
+    restecg = factor(restecg, labels = c("norm", "st_abnorm", "lv_hypt")),
+    exang = factor(exang, labels = c("no", "yes")),
+    slope = factor(slope, labels = c("up", "flat", "down")),
+    thal  = factor(thal, labels= c("norm", "fdef", "rdef")),
+    hd = factor(hd, labels = c("abs", "prs"))
+  )
+
+```
+# ggplot --- あらゆるデータの可視化
+
+## ggplot
+
+ - tidyデータをプロットするツール．
+ - 考え付く事は，おおよそなんでもできる．
+ - ここでは，エクセルではできない特殊なプロットを中心に紹介する．
+
+## pair
+
+講義でも扱った．プロットを行列形式で出力できる．
+
+```{r}
+ggpairs(
+  dplyr::select(dat_hd,age, sex, cp, hd)
+) +
+  theme(text = element_text(size = 14), axis.text.x = element_text(angle = 90),
+        strip.text.y = element_text(angle = 0))
+```
+
+## box plot / jitter plot
+
+カテゴリ変数に対する連続変数の分布を表す．
+また，適当に値をバラつかせて表示できる．
+
+```{r}
+f <- function(x) {
+  r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+ggplot(dat_hd, aes(cp, sbp))+
+  stat_summary(fun.data = f, geom = "boxplot") +
+  geom_jitter(height = 0, width = 0.2) 
+```
+ 
+## violin plot / jitter plot
+
+カテゴリ変数に対する連続変数の密度分布を表す．
+
+```{r}
+ggplot(dat_hd, aes(cp, sbp))+
+  geom_violin()+
+  geom_jitter(height = 0, width = 0.2) 
+```
+
+## smooth line
+
+連続変数のバラつきと共に，適当な回帰線を示す．
+線形だけではなく任意の関数が指定可能で，95%信頼区間も示せる．
+
+```{r}
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3))
+```
+
+## smooth line (logistic)
+
+ロジスティック回帰分析も（単変量であれば）プロットできてしまう．
+
+```{r}
+
+data("SpaceShuttle")
+
+ss_rev <- SpaceShuttle %>%
+  dplyr::mutate(Fail = if_else(Fail == "yes", 1,0),
+                Pressure = factor(Pressure)) %>%
+  na.omit()
+
+ggplot(ss_rev, aes(Temperature, Fail)) +
+  geom_point() +
+  geom_smooth(method = "glm", formula = y ~ x, method.args = list(family = binomial)) +
+  ggtitle("O-ring failure in the Space Shuttle")
+
+```
+
+## colour / shape
+
+群ごとに色や形を設定できる．点でも，線でも．
+
+```{r}
+ggplot(dat_hd, aes(sbp, chol, colour = cp, shape = hd)) +
+  geom_point(size = 3) 
+```
+
+
+## linerange / error bar
+
+任意のエラーバーや範囲を付けられる．
+
+```{r}
+model_hd <- lm(oldpeak ~ cp + mthalach + cp + chol, data = dat_hd)
+
+coef_lm_hd <- broom::tidy(model_hd) %>%
+  dplyr::mutate(
+    fit = estimate,
+    upr = estimate + 1.96 * std.error,
+    lwr = estimate - 1.96 * std.error
+  )
+
+ggplot(coef_lm_hd, aes(term, fit)) +
+  geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.2) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## linerange / error bar
+
+複数ある場合，ずらすこともできる．線も引ける．
+
+```{r}
+coef_lm_hd_2 <- coef_lm_hd %>%
+  dplyr::mutate(
+    fit = fit * rnorm(6),
+    upr = fit + 0.5*(1+runif(6)),
+    lwr = fit - 0.2*(1+runif(6))
+  )
+
+ggplot(bind_rows(coef_lm_hd, coef_lm_hd_2, .id="grp"), 
+       aes(term, fit, colour = grp, group = grp)) +
+  geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.2,
+                position = position_dodge(width = 0.4)) +
+  geom_point(position = position_dodge(width = 0.4)) +
+  geom_line(position = position_dodge(width = 0.4)) +
+  theme(axis.text.x = element_text(angle = 90))
+
+```
+
+## raster plot
+
+xyzデータをプロットできる．
+
+```{r}
+data("volcano")
+rownames(volcano) <- 0:86
+colnames(volcano) <- 0:60
+
+df_volcano <- as.data.frame(volcano) %>%
+  dplyr::mutate(x = row_number() - 1) %>%
+  tidyr::pivot_longer(cols = -x, names_to = "y", values_to = "height") %>%
+  dplyr::mutate(y = as.numeric(y))
+
+ggplot(df_volcano, aes(x, y, fill = height)) +
+  geom_raster() +
+  scale_fill_gradientn(colours=c("green","yellow","red"))
+
+```
+
+## contour plot
+
+等高線にすることも可能．
+```{r}
+
+df_volcano %>%
+  raster::rasterFromXYZ() %>%
+  raster::rasterToContour(levels = c(120,140,160,180)) %>%
+  st_as_sf() %>%
+  st_cast("POLYGON") %>%
+  ggplot() +
+  geom_sf(aes(fill = level))
+```
+
+
+## mosaic plot
+
+カテゴリ変数の度数分布および偏りを示す．
+
+```{r}
+ggplot(dat_hd) +
+  geom_mosaic(aes(x = product(thal), fill = cp)) +
+  scale_x_productlist("thal") +
+  scale_y_continuous("cp")
+```
+
+## polar scale
+
+極座標でもプロットできる．
+
+```{r}
+
+stat_wind <- read.csv("stat-wind-2018.csv")
+
+ggplot(stat_wind, aes(x =wind_direction_ctg, y = rate, fill = wind_speed_ctg)) + 
+  geom_bar(stat= 'identity', width = 0.8) + 
+  coord_polar(theta = "x",start = -0.2) + 
+  scale_x_discrete('Wind direction') +
+  scale_y_continuous('Rate') +
+  scale_fill_brewer('Wind speed (m/s)', palette = "Set2")+
+  theme(legend.position="bottom")
+```
+
+## facet wrap
+
+任意のプロットを，カテゴリ毎に分けて表示できる．
+
+```{r}
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3)) +
+  facet_wrap(~cp)
+```
+
+## facet grid
+
+左右に並べて表示する．上下に並べることもできる．
+
+```{r}
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3)) +
+  facet_grid(~cp)
+```
+
+## 対数軸，任意の目盛
+
+対数軸はもちろん，任意の場所に任意の目盛を設定できる．
+
+```{r}
+
+ggplot(dat_hd, aes(sbp, chol)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3)) +
+  scale_x_log10("対数軸", breaks = seq(50,250,10)) +
+  scale_y_continuous("実数軸", breaks = c(150,200,300,500), 
+                     labels = c("位置に", "好きな","ラベルを", "好きな"))
+```

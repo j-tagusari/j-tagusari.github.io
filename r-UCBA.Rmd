@@ -1,0 +1,126 @@
+```{r include = F}
+library(tidyverse)
+set.seed(123)
+
+options(digits = 3)
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 20))
+)
+
+```
+# 統計解析サンプル UCBAdmissions --- simpson's paradox
+
+## データ概観
+ - 1973年，カリフォルニア大学バークレー校の大学院入学実績
+ - 女性の合格率が低く，「女性を差別している」という批判を受けた
+ - 本当にそうか？？
+
+```{r ucbadmissions}
+data('UCBAdmissions')
+UCBAdmissions <- as.data.frame(UCBAdmissions) 
+str(UCBAdmissions)
+```
+
+## クロス表によるデータ概観
+
+ - 男性よりも女性の方が合格者数が少ない
+ - ただし，合格率は学部によって大きく異なる
+
+**性別 vs 合否**
+
+実数
+```{r}
+xtabs(Freq ~ Admit + Gender, UCBAdmissions) %>% knitr::kable()
+```
+
+
+合否割合
+```{r}
+xtabs(Freq ~ Admit + Gender, UCBAdmissions) %>% prop.table(2) %>% knitr::kable(digits = 3)
+```
+
+**学部 vs 合否**
+
+実数
+```{r}
+xtabs(Freq ~ Admit + Dept, UCBAdmissions) %>% knitr::kable()
+```
+
+合否割合
+```{r}
+xtabs(Freq ~ Admit + Dept, UCBAdmissions) %>% prop.table(2)%>% knitr::kable(digits = 2)
+```
+
+## 統計学的検定
+
+ - 確かに女性の方が合格率が低いが・・・<br>（Fisherの正確検定で不合格オッズ1.84倍）
+ - この結果は，「受験した学部が異なる」事を反映していない．
+ 
+```{r}
+fisher.test(xtabs(Freq~Admit+Gender, UCBAdmissions))
+```
+
+
+
+
+## 多重ロジスティック回帰による解析
+
+学部で調整すると，性別による差は**検出されない**
+
+```{r}
+UCBAdmissions_rev <- tidyr::spread(UCBAdmissions, key = "Admit", value = "Freq")
+model <- glm(cbind(Admitted, Admitted + Rejected) ~ Gender + Dept, data = UCBAdmissions_rev, family = binomial)
+summary(model)
+```
+
+
+
+## 多重ロジスティック回帰モデルの有意性
+
+ - 講義では触れなかったが，多重ロジスティック回帰モデルについて，ANOVAに似た手法で変数の有意性を示せる．
+ - ANOVAとは異なり，「正規分布」等の仮定は用いられていない．
+
+```{r}
+car::Anova(model)
+```
+
+
+## 多変量解析の結果は可視化で一目瞭然
+
+女性の方が高難度の学部に挑戦し，その結果，合格率が下がっている
+ 
+```{r}
+vcd::mosaic(Admit~Gender+Dept,data=UCBAdmissions,direction=c('v','v','h'))
+```
+
+
+## なお，東京医科大学（2016～2018）では・・・
+
+「入試差別が行われていた」ことが問題になったケース．<br>
+他の交絡因子の可能性は排除できないが，有意に女性合格者が少ない．
+
+```{r}
+d_tokyoika <- data.frame(
+  Gender = factor(rep(c("Male", "Female"), each = 2), levels = c("Male", "Female")),
+  Admit  = rep(c("Admitted", "Rejected"), 2),
+  Freq   = c(470, 6562, 210, 4512)
+)
+
+fisher.test(xtabs(Freq~Admit+Gender, d_tokyoika))
+```
+
+## なお，北大医学部（2016～2018）では・・・
+
+有意水準0.05なら，差は「検出されない」．<br>
+ただし，他の交絡因子の可能性は排除できない．
+
+```{r}
+d_hokudai <- data.frame(
+  Gender = factor(rep(c("Male", "Female"), each = 2), levels = c("Male", "Female")),
+  Admit  = rep(c("Admitted", "Rejected"), 2),
+  Freq   = c(245, 534, 64, 189)
+)
+
+fisher.test(xtabs(Freq~Admit+Gender, d_hokudai))
+```

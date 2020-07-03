@@ -1,0 +1,112 @@
+```{r include = F}
+library(tidyverse)
+set.seed(123)
+
+options(digits = 3)
+theme_set(
+  theme_bw() +
+    theme(text = element_text(size = 20))
+)
+
+```
+
+# 統計解析サンプル ToothGrowth --- カテゴリ×連続，交互作用
+
+## データ概観
+
+ - モルモットに異なるサプリメント（supp: OJ/VC）を異なる量（dose）与えた際の歯芽細胞の長さ（len）に関するデータ．
+ - suppやdoseによってlenは異なるのか？
+
+```{r toothgrowth}
+data("ToothGrowth")
+
+str(ToothGrowth)
+
+```
+
+## ggplotで一気にデータを概観！
+
+ - 多少左右にバラけさせて表示
+ - 値の分布とdose/supp/lenの関係を一度に表示できる
+
+```{r}
+ggplot(ToothGrowth,aes(dose,len,colour=supp)) + 
+  geom_jitter(width=0.05, height = 0)
+
+```
+
+## 単回帰を信頼区間付きでプロット
+
+lenがdoseに対して線形とすると・・・
+
+```{r}
+ggplot(ToothGrowth,aes(dose,len)) + 
+  geom_jitter(width=0.05, height = 0, aes(colour = supp))+
+  geom_smooth(method = "lm", formula = y~x) 
+
+```
+
+## 重回帰（交互作用なし）プロット
+
+交互作用がなければ，2つの回帰式は平行．
+
+```{r}
+
+model_tg <- lm(len ~ dose + supp, ToothGrowth)
+
+d_tg_pred <- data.frame(
+  dose = rep(seq(0.5,2,0.1), 2),
+  supp = rep(c("OJ","VC"), each = 16)
+) %>%
+  bind_cols(
+    predict(model_tg, ., se.fit = T) %>%
+      .[c("fit", "se.fit")]
+  ) %>%
+  dplyr::mutate(
+    upr = fit + 1.96 * se.fit,
+    lwr = fit - 1.96 * se.fit
+  )
+```
+
+```{r}
+ggplot(ToothGrowth,aes(dose, colour = supp)) + 
+  geom_ribbon(data = d_tg_pred, aes(ymin = lwr, ymax = upr, fill = supp), alpha = 0.2, colour = NA) +
+  geom_line(data = d_tg_pred, aes(y = fit)) +
+  geom_jitter(width=0.05, height = 0, aes(y = len))
+
+```
+
+
+## 重回帰（交互作用あり）プロット
+
+doseが小さい時にはOJとVCの差は大きいが，doseが大きい時には差は小さい．
+
+```{r}
+ggplot(ToothGrowth,aes(dose, len, colour = supp, fill = supp)) + 
+  geom_smooth(method = "lm", alpha = 0.2) +
+  geom_jitter(width=0.05, height = 0, aes(y = len))
+
+```
+
+## 重回帰（交互作用あり，facet）プロット
+
+図を複数に分けて表示することもできる．
+
+```{r}
+ggplot(ToothGrowth,aes(dose, len, colour = supp, fill = supp)) + 
+  geom_smooth(method = "lm", alpha = 0.2) +
+  geom_jitter(width=0.05, height = 0, aes(y = len))+
+  facet_wrap(~supp)
+
+```
+
+
+## 重回帰に基づくANOVA（分散分析）
+
+ - lenに対し，supp，doseおよびこれらの交互作用が検出された．
+ - ただし，誤差分布に「正規分布」を仮定していることに注意．
+
+```{r}
+model <- lm(len ~ supp * dose, data=ToothGrowth )
+car::Anova(model)
+```

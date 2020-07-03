@@ -6,5 +6,12 @@ navbar:
       href: index.html
     - text: "Computing Excercise"
       href: computing-excer.html
-    - text: "R intro"
-      href: r-intro.html
+    - text: "R"
+      menu:
+        - text: "Why R?"
+          href: r-why.html
+        - text: "R base"
+          href: r-base.html
+        - text: "Tidyverse"
+          href: r-tidy.html
+          
